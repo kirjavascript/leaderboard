@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "better-sqlite3": "^9.4.3",
+    "d3-dsv": "^3.0.1"
+  }
+}

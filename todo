@@ -1,0 +1,19 @@
+# spec
+tags!!
+choose a date to show from (time travel slider??)
+same things from existing leaderboard
+
+users / submit queue
+
+cache API results?? for main lb and bust cache when writing
+
+user profiles
+
+// dedupe by score, playstyle, region
+// proof level should be
+
+// import: vid pb proof level consolodate
+//
+// playerProfile with history
+// have exclude and include for tags
+// TODO: boardLayout show region available
