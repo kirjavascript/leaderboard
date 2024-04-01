@@ -38,6 +38,8 @@ db.pragma('journal_mode = WAL'); // only one connection at a time is made
     INSERT INTO tags (name) VALUES ('SPS');
     INSERT INTO tags (name) VALUES ('speedhack');
     INSERT INTO tags (name) VALUES ('crash');
+    INSERT INTO tags (name) VALUES ('recalculated crash');
+    INSERT INTO tags (name) VALUES ('recalculated score');
     INSERT INTO tags (name) VALUES ('pausing');
     INSERT INTO tags (name) VALUES ('masters');
     INSERT INTO tags (name) VALUES ('CTM');
@@ -192,7 +194,7 @@ function authEditor({ name, password }) {
 async function importCSV(board) {
     const { csvParse } = await import('d3-dsv');
     const data = fs.readFileSync(
-        join(__dirname, '../data/all_scores.csv'),
+        join(__dirname, '../all_scores.csv'),
         'utf8',
     );
     const listing = csvParse(data);
@@ -209,17 +211,14 @@ async function importCSV(board) {
 
     const editors = listEditors();
 
-    // add scores
-
-    listing.forEach((item) => {
+    const importScore = item => {
         const editor = editors.find((d) => d.name === item.editor);
-        item.proofLevel = item['proof level'];
-        item.proof = item['proof link'];
 
         const score = board.addScore(item);
 
         score.setEditor(editor.id);
 
+        // set legacy time
         db.prepare(
             `
             UPDATE ${board.tableName}
@@ -230,9 +229,33 @@ async function importCSV(board) {
             WHERE id = :scoreId
         `,
         ).run({ scoreId: score.id, time: score.time });
+    };
+
+    // add scores & remap keys
+
+    listing.forEach((item) => {
+        item.proofLevel = item['proof level'];
+        item.proof = item['proof link'];
+
+        importScore(item);
     });
 
-    // TODO: vidPB
+    // handle vidpb
+
+    listing.forEach(item => {
+        const vidPB = item['vid pb'];
+        if (vidPB) {
+            const existing = db.prepare(`SELECT * FROM ${board.tableName} WHERE score = ${vidPB} AND proofLevel LIKE '%Video%'`).get();
+            if (!existing) {
+                importScore({
+                    ...item,
+                    time: item.time - (300 * 12),
+                    proofLevel: 'Video',
+                    proof: 'vid pb column from google sheets'
+                })
+            }
+        }
+    });
 }
 
 // init

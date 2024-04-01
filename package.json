@@ -1,6 +1,15 @@
 {
-  "dependencies": {
-    "better-sqlite3": "^9.4.3",
-    "d3-dsv": "^3.0.1"
-  }
+    "name": "leaderboard",
+    "scripts": {
+        "start": "node src/main.js",
+        "dev": "node src/main.js --dev"
+    },
+    "dependencies": {
+        "better-sqlite3": "^9.4.3",
+        "d3-dsv": "^3.0.1",
+        "esbuild": "^0.20.2",
+        "express": "^4.19.2",
+        "react": "^18.2.0",
+        "react-dom": "^18.2.0"
+    }
 }
