@@ -46,7 +46,7 @@ module.exports = (devMode) => {
         bundle: true,
         // sourcemap: devMode,
         minify: !devMode,
-        platform: 'node',
+        platform: 'browser',
         format: 'iife',
         metafile: true,
         banner: {
