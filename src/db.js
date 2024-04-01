@@ -7,7 +7,8 @@ const db = require('better-sqlite3')(dbPath);
 
 db.pragma('journal_mode = WAL'); // only one connection at a time is made
 
-!hasDB && db.exec(`
+!hasDB &&
+    db.exec(`
     CREATE TABLE boards (
         id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE,
         name TEXT,
@@ -20,31 +21,8 @@ db.pragma('journal_mode = WAL'); // only one connection at a time is made
         id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE,
         name TEXT,
         password TEXT,
-        deactivated BOOLEAN DEFAULT 0
-    );
-
-    CREATE TABLE platform (
-        id INTEGER PRIMARY KEY,
-        name TEXT
-    );
-
-    INSERT INTO platform (name) VALUES ('Emulator');
-    INSERT INTO platform (name) VALUES ('Console');
-
-    CREATE TABLE style (
-        id INTEGER PRIMARY KEY,
-        name TEXT
-    );
-
-    INSERT INTO style (name) VALUES ('DAS');
-    INSERT INTO style (name) VALUES ('Tap');
-    INSERT INTO style (name) VALUES ('Roll');
-    INSERT INTO style (name) VALUES ('Bufferfly');
-    INSERT INTO style (name) VALUES ('Mojatap');
-
-    CREATE TABLE proofLevel (
-        id INTEGER PRIMARY KEY,
-        name TEXT
+        deactivated BOOLEAN DEFAULT 0,
+        admin BOOLEAN DEFAULT 0
     );
 
     CREATE TABLE tags (
@@ -74,22 +52,14 @@ db.pragma('journal_mode = WAL'); // only one connection at a time is made
 
 // boards
 
-const boardTypes = {
-    highscore: {
-        schema: 'score INTEGER NOT NULL,',
-    },
-    level: {
-        schema: 'level INTEGER NOT NULL,',
-    },
-    lines: {
-        schema: 'lines INTEGER NOT NULL,',
-    },
-};
+const boardTypes = ['score', 'level', 'linesHigh', 'linesLow'];
 
 function addBoard({ name, key, type }) {
-    if (!(type in boardTypes)) throw new Error('invalid boardtype');
+    if (!boardTypes.includes(type)) throw new Error('invalid boardtype');
 
-    db.prepare('INSERT INTO boards (`name`, `key`, `type`) VALUES (:name, :key, :type)').run({
+    db.prepare(
+        'INSERT INTO boards (`name`, `key`, `type`) VALUES (:name, :key, :type)',
+    ).run({
         name,
         key,
         type,
@@ -100,25 +70,23 @@ function addBoard({ name, key, type }) {
     db.exec(`
         CREATE TABLE ${tableName} (
             id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE,
-            ${boardTypes[type].score}
 
-            playerName TEXT NOT NULL,
+            score REAL NOT NULL,
+            player TEXT NOT NULL,
 
-            platformId INTEGER NOT NULL,
-            proofLevelId INTEGER NOT NULL,
-            styleId INTEGER NOT NULL,
-            editorId INTEGER,
+            platform TEXT,
+            proofLevel TEXT,
+            style TEXT,
 
             notes TEXT,
             proof TEXT,
+            editorId INTEGER,
             verified BOOLEAN NOT NULL,
+            rejected BOOLEAN DEFAULT 0,
             submittedTime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             verifiedTime TIMESTAMP,
             modifiedTime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (platformId) REFERENCES platform(id),
-            FOREIGN KEY (styleId) REFERENCES style(id),
-            FOREIGN KEY (proofLevelId) REFERENCES proofLevel(id),
-            FOREIGN KEY (editorId) REFERENCES editor(id)
+            FOREIGN KEY (editorId) REFERENCES editors(id)
         );
 
         CREATE TABLE ${tableName}_tags (
@@ -140,89 +108,153 @@ function hashBoardName(key) {
     const clean = key.replace(/[^a-zA-Z0-9]/g, '').slice(0, 128);
     return `board_${clean}_${hash}`;
 }
+
 class Board {
     constructor({ key, type }) {
         this.key = key;
         this.type = type;
         this.tableName = hashBoardName(key);
+
+        this.addScoreQuery = db.prepare(`
+            INSERT INTO ${this.tableName} (score, player, platform, proofLevel, style, notes, proof, editorId, verified)
+            VALUES (:score, :player, :platform, :proofLevel, :style, :notes, :proof, NULL, 0);
+        `);
+
+        this.addScore = (entry) => new Score({
+            tableName: this.tableName,
+            id: this.addScoreQuery.run(entry).lastInsertRowid,
+        });
     }
-
-    addScore = () => {
-
-
-    };
 }
 
-!hasDB && addBoard({
-    name: '0-19 Score',
-    key: 'score',
-    type: 'highscore',
-});
+// scores
+
+class Score {
+    constructor({ tableName, id }) {
+        this.tableName = tableName;
+        this.id = id;
+
+        this.setEditorQuery = db.prepare(`
+            UPDATE ${this.tableName}
+            SET editorId = :editorId,
+                modifiedTime = CURRENT_TIMESTAMP
+            WHERE id = :scoreId
+        `);
+
+        this.setEditor = (editorId) =>
+            this.setEditorQuery.run({
+                scoreId: this.id,
+                editorId,
+            });
+    }
+}
 
 
 const listQuery = db.prepare('SELECT * from boards');
 const listBoards = () => listQuery.all();
 
-
 // editors
 
-const listEditQuery = db.prepare('SELECT * from boards');
+const listEditQuery = db.prepare('SELECT * from editors');
 const listEditors = () => listEditQuery.all();
 
-const hashPassword = (pass) => crypto.createHmac('sha256', passSalt).update(pass).digest('hex');
-const passSalt = fs.readFileSync(join(__dirname, '/salt'), 'utf8') || (() => {throw new Error('provide salt file')})();
+const hashPassword = (pass) =>
+    crypto.createHmac('sha256', passSalt).update(pass).digest('hex');
+const passSalt =
+    fs.readFileSync(join(__dirname, '/../salt'), 'utf8') ||
+    (() => {
+        throw new Error('provide salt file');
+    })();
 
 function addEditor({ name, password }) {
-    db.prepare('INSERT INTO boards (`name`, `password`) VALUES (:name, :password)').run({
+    db.prepare(
+        'INSERT INTO editors (`name`, `password`, `deactivated`) VALUES (:name, :password, 1)',
+    ).run({
         name,
         password: hashPassword(password),
     });
 }
-;
+
 function authEditor({ name, password }) {
     const hashed = hashPassword(password);
-    return db.prepare('SELECT 1 FROM editors WHERE name = :name AND password = :password').get({
-        name,
-        password: hashed,
-    });
+    return db
+        .prepare(
+            'SELECT 1 FROM editors WHERE name = :name AND password = :password',
+        )
+        .get({
+            name,
+            password: hashed,
+        });
 }
-
 
 // import
 
 async function importCSV(board) {
     const { csvParse } = await import('d3-dsv');
-    const data = fs.readFileSync(join(__dirname, '../data/all_scores.csv'), 'utf8');
+    const data = fs.readFileSync(
+        join(__dirname, '../data/all_scores.csv'),
+        'utf8',
+    );
     const listing = csvParse(data);
 
     // add editors
-    const existingEditors = listEditors().map(d => d.name);
+    const existingEditors = listEditors().map((d) => d.name);
 
     listing.forEach(({ editor }) => {
         if (!existingEditors.includes(editor)) {
-            addEditor(item.editor);
+            addEditor({ name: editor, password: 'N/A' });
             existingEditors.push(editor);
         }
     });
 
-    console.log(existingEditors);
+    const editors = listEditors();
+
+    // add scores
+
+    listing.forEach((item) => {
+        const editor = editors.find((d) => d.name === item.editor);
+        item.proofLevel = item['proof level'];
+        item.proof = item['proof link'];
+
+        const score = board.addScore(item);
+
+        score.setEditor(editor.id);
+
+        db.prepare(
+            `
+            UPDATE ${board.tableName}
+            SET submittedTime = :time,
+                verifiedTime = :time,
+                modifiedTime = CURRENT_TIMESTAMP,
+                verified = 1
+            WHERE id = :scoreId
+        `,
+        ).run({ scoreId: score.id, time: score.time });
+    });
+
+    // TODO: vidPB
 }
 
-importCSV(new Board(listBoards()[0])).catch(console.error);
+// init
 
+if (!hasDB) {
+    addBoard({
+        name: 'NTSC 0-19 Score',
+        key: 'default',
+        type: 'score',
+    });
 
-// dedupe by score, playstyle, region
-// proof level should be
-
-// import: vid pb proof level consolodate
-//
-// playerProfile with history
-// have exclude and include for tags
-// TODO: boardLayout show region available
-
-
-
-
+    importCSV(new Board(listBoards()[0])).catch(console.error);
+}
 
 // API
-module.exports = { addBoard, listBoards, Board, listEditors };
+module.exports = {
+    Board,
+    Score,
+    addBoard,
+    listBoards,
+    listEditors,
+    addEditor,
+    authEditor,
+    importCSV,
+};
