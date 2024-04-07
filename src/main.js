@@ -10,15 +10,20 @@ require('./build')(devMode);
 
 const app = express();
 
-app.use(express.json());
+app.use(express.json({
+    type: '*/*',
+}));
 app.use('/', express.static(join(__dirname, '/../static')));
 app.use('/', express.static(join(__dirname, '/../dist')));
 
-const homepage = readFileSync(__dirname + '/../static/index.html', 'utf8');
+// API
 
 app.get('/boards', (_req, res) => res.json(api.listBoards()));
-app.post('/board', (_req, res) => res.json(api.listBoards()));
+app.post('/board', (req, res) => res.json(new api.Board(req.body).query()));
 
+// routing
+
+const homepage = readFileSync(__dirname + '/../static/index.html', 'utf8');
 app.use('*', (_req, res) => {
     res.send(homepage);
 });

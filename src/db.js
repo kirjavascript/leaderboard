@@ -126,6 +126,11 @@ class Board {
             tableName: this.tableName,
             id: this.addScoreQuery.run(entry).lastInsertRowid,
         });
+
+        this.query = () => {
+            return db.prepare(`SELECT * from ${this.tableName}`).all();
+
+        };
     }
 }
 
@@ -152,7 +157,7 @@ class Score {
 }
 
 
-const listQuery = db.prepare('SELECT * from boards');
+const listQuery = db.prepare('SELECT name, key, type from boards WHERE public = 1');
 const listBoards = () => listQuery.all();
 
 // editors
