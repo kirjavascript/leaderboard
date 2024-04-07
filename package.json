@@ -5,6 +5,7 @@
         "dev": "node src/main.js --dev"
     },
     "dependencies": {
+        "@solidjs/router": "^0.13.1",
         "better-sqlite3": "^9.4.3",
         "d3-dsv": "^3.0.1",
         "esbuild": "^0.20.2",

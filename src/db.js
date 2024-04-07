@@ -194,7 +194,7 @@ function authEditor({ name, password }) {
 async function importCSV(board) {
     const { csvParse } = await import('d3-dsv');
     const data = fs.readFileSync(
-        join(__dirname, '../all_scores.csv'),
+        join(__dirname, '../all_scores.csv'), // (fractal made this file)
         'utf8',
     );
     const listing = csvParse(data);
@@ -262,7 +262,7 @@ async function importCSV(board) {
 
 if (!hasDB) {
     addBoard({
-        name: 'NTSC 0-19 Score',
+        name: 'NTSC',
         key: 'default',
         type: 'score',
     });

@@ -1,9 +1,14 @@
-import './main.scss';
+import './styles/main.scss';
 import { render } from 'solid-js/web';
+import { Router, Route } from '@solidjs/router';
 
-//routing
+import NotFound from './404';
 
 render(
-    () => <h1>header</h1>,
+    () => <Router>
+        <Route path="/" component={() => 'leaderboard goes here'} />
+        <Route path="/submit" component={() => 'submit goes here'} />
+        <Route path="*404" component={NotFound} />
+    </Router>,
     document.body.appendChild(document.createElement('div')),
 );
