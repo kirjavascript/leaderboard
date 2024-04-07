@@ -13,7 +13,7 @@ const statsPlugin = () => ({
                     ([file, { bytes }]) => {
                         const relPath = path.relative(
                             process.cwd(),
-                            path.resolve(__dirname, file),
+                            file,
                         );
 
                         const i = Math.floor(Math.log(bytes) / Math.log(1024));
@@ -39,12 +39,11 @@ const statsPlugin = () => ({
 
 module.exports = (devMode) => {
     const config = {
-        outdir: './static',
+        outdir: './dist',
         entryPoints: {
             main: './web/main.jsx',
         },
         bundle: true,
-        // sourcemap: devMode,
         minify: !devMode,
         platform: 'browser',
         format: 'iife',
@@ -54,15 +53,22 @@ module.exports = (devMode) => {
         },
         plugins: [
             statsPlugin(),
+            require('esbuild-plugin-solid').solidPlugin(),
+            require('esbuild-sass-plugin').sassPlugin(),
         ],
+        loader: {
+            '.ttf': 'file',
+        },
         define: {
             __DEV__: String(devMode),
-            __REACT_DEVTOOLS_GLOBAL_HOOK__: '{ "isDisabled": true }',
         },
     };
 
     if (devMode) {
-        esbuild.context(config).then(ctx => ctx.watch()).catch(console.error);
+        esbuild
+            .context(config)
+            .then((ctx) => ctx.watch())
+            .catch(console.error);
     } else {
         esbuild.build(config).catch(console.error);
     }

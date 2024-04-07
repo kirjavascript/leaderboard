@@ -1,0 +1,95 @@
+$white: #BBB;
+$black: #111;
+$grey: #333;
+$purple: #66D;
+$page-margin: 10px;
+
+@font-face {
+    font-family: 'PressStart';
+    src: url(./font.ttf) format('truetype');
+}
+
+body {
+    margin: 20px;
+    font-family: PressStart;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+html, body {
+    // height: 100%;
+    background-color: $black;
+    color: $white;
+    box-sizing: border-box;
+    font-weight: bold;
+    font-size: 14px;
+}
+*, *:before, *:after {
+    box-sizing: inherit;
+}
+input[type="checkbox"] {
+    accent-color: $grey;
+}
+a {
+    color: $purple;
+    font-size: 13px;
+    line-height: 1.3em;
+}
+
+select {
+    border: 2px solid $white;
+    background-color: $black;
+    color: $white;
+    font-weight: bold;
+    font-family: inherit;
+    font-size: 117%;
+    width : 150px;
+    padding: 5px;
+    margin: 0;
+    box-sizing: border-box;
+}
+
+tr, td {
+    text-align: center;
+}
+td {
+    margin: 0 5px;
+}
+tr:nth-of-type(odd) td {
+    background-color: #222;
+}
+
+table {
+    margin: 20px 0;
+}
+
+.menu {
+    display: flex;
+    justify-content: space-between;
+}
+
+.multi-select {
+    margin: 5px 0;
+    text-align: right;
+}
+
+label {
+    font-size: 12px;
+    padding: 3px 15px;
+}
+
+.filter-option {
+    display: inline;
+}
+
+.vid-pb {
+    font-size: 9px;
+    padding: 4px 0;
+    margin: 4px 0;
+    display: block;
+}
+
+.links {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+}

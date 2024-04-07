@@ -1,4 +1,4 @@
 salt
 *.db*
 node_modules
-static/main.js
+dist

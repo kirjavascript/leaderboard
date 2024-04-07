@@ -1,6 +1,9 @@
-import { createRoot } from 'react-dom/client';
-import React from 'react';
+import './main.scss';
+import { render } from 'solid-js/web';
 
-const root = createRoot(document.body.appendChild(document.createElement('div')));
+//routing
 
-root.render(<h1>test</h1>);
+render(
+    () => <h1>header</h1>,
+    document.body.appendChild(document.createElement('div')),
+);
