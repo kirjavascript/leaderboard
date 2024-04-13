@@ -40,13 +40,12 @@ db.pragma('journal_mode = WAL'); // only one connection at a time is made
     INSERT INTO tags (name) VALUES ('crash');
     INSERT INTO tags (name) VALUES ('recalculated crash');
     INSERT INTO tags (name) VALUES ('recalculated score');
-    INSERT INTO tags (name) VALUES ('pausing');
     INSERT INTO tags (name) VALUES ('masters');
     INSERT INTO tags (name) VALUES ('CTM');
     INSERT INTO tags (name) VALUES ('CTWC');
     INSERT INTO tags (name) VALUES ('history viewer');
-    INSERT INTO tags (name) VALUES ('minor pausing');
-    INSERT INTO tags (name) VALUES ('long pausing');
+    INSERT INTO tags (name) VALUES ('pausing');
+    INSERT INTO tags (name) VALUES ('pause abuse');
     INSERT INTO tags (name) VALUES ('19 start');
     INSERT INTO tags (name) VALUES ('keyboard');
 
@@ -127,9 +126,31 @@ class Board {
             id: this.addScoreQuery.run(entry).lastInsertRowid,
         });
 
-        this.query = () => {
-            return db.prepare(`SELECT * from ${this.tableName}`).all();
+        this.query = (time) => {
+            const listing = db.prepare(`
+                SELECT t1.*
+                FROM ${this.tableName} t1
+                JOIN (
+                    SELECT player, MAX(score) AS max_score
+                    FROM ${this.tableName}
+                    WHERE submittedTime < ${time ?? 0}
+                    AND verified = true
+                    GROUP BY player
+                ) t2 ON t1.player = t2.player AND t1.score = t2.max_score
+                ORDER BY t1.score DESC;
+            `).all();
 
+
+            // dedupe when a score has improved
+            for (let i = 0; i < listing.length; i++) {
+                const cur = listing[i];
+                const next = listing[i + 1];
+                if (next && (cur.player === next.player) && (cur.score === next.score)) {
+                    delete listing[i];
+                }
+            }
+
+            return listing.filter(Boolean);
         };
     }
 }
@@ -233,7 +254,7 @@ async function importCSV(board) {
                 verified = 1
             WHERE id = :scoreId
         `,
-        ).run({ scoreId: score.id, time: score.time });
+        ).run({ scoreId: score.id, time: item.time });
     };
 
     // add scores & remap keys

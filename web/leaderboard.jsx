@@ -1,4 +1,5 @@
 import { For, createSignal, createEffect } from 'solid-js';
+import ScoreTable from './scoretable';
 
 export default function () {
     const [boards, setBoards] = createSignal([]);
@@ -17,7 +18,8 @@ export default function () {
 
     createEffect(() => {
         if (!board()) return;
-        board() && fetch('/board', {
+
+        fetch('/board', {
             method: 'POST',
             body: JSON.stringify(board()),
         })
@@ -44,7 +46,11 @@ export default function () {
                     )}
                 </For>
             </select>
-            {JSON.stringify(listing())}
+            {board() && <>
+                <ScoreTable listing={listing} board={board} />
+            </>}
+            <pre> {JSON.stringify(board(),0,4)}</pre>
+            <pre> {JSON.stringify(listing(),0,4)}</pre>
         </>
     );
 }
