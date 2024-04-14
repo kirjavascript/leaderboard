@@ -8,6 +8,10 @@ const port = process.env.port || 3000;
 const api = require('./db');
 require('./build')(devMode);
 
+if (process.argv.includes('--unsafe-import')) {
+    require('./import')(api).catch(console.error);
+}
+
 const app = express();
 
 app.use(express.json({

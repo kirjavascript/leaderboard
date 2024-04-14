@@ -4,6 +4,9 @@ $grey: #333;
 $purple: #66D;
 $page-margin: 10px;
 
+$green: #6AA84F;
+$red: #990000;
+
 @font-face {
     font-family: 'PressStart';
     src: url(./font.ttf) format('truetype');
@@ -27,7 +30,7 @@ html, body {
     box-sizing: inherit;
 }
 input[type="checkbox"] {
-    accent-color: $grey;
+    accent-color: $green;
 }
 a {
     color: $purple;
@@ -53,6 +56,7 @@ tr, td {
 }
 td {
     margin: 0 5px;
+    padding: 5px;
 }
 tr:nth-of-type(odd) td {
     background-color: #222;
@@ -79,13 +83,6 @@ label {
 
 .filter-option {
     display: inline;
-}
-
-.vid-pb {
-    font-size: 9px;
-    padding: 4px 0;
-    margin: 4px 0;
-    display: block;
 }
 
 .links {

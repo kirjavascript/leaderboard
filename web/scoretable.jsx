@@ -26,11 +26,11 @@ export default function ScoreTable({ listing, board }) {
                     each={listing()}
                 >
                     {(item) => (
-                        <tr>
-                            <td>index</td>
+                        <tr class="row-score">
+                            <td class="index">index</td>
                             <For each={cols}>
                                 {([, property]) => (
-                                    <td>{item[property]} </td>
+                                    <td class={property}>{item[property]} </td>
                                 )}
                             </For>
                         </tr>

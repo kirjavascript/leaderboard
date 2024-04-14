@@ -21,7 +21,7 @@ db.pragma('journal_mode = WAL'); // only one connection at a time is made
         id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE,
         name TEXT,
         password TEXT,
-        deactivated BOOLEAN DEFAULT 0,
+        active BOOLEAN DEFAULT 0,
         admin BOOLEAN DEFAULT 0
     );
 
@@ -83,6 +83,7 @@ function addBoard({ name, key, type }) {
             proof TEXT,
             editorId INTEGER,
             verified BOOLEAN NOT NULL,
+            historical BOOLEAN DEFAULT 0,
             rejected BOOLEAN DEFAULT 0,
             submittedTime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             verifiedTime TIMESTAMP,
@@ -133,13 +134,13 @@ class Board {
                 JOIN (
                     SELECT player, MAX(score) AS max_score
                     FROM ${this.tableName}
-                    WHERE submittedTime < ${time ?? 0}
-                    AND verified = true
+                    WHERE verified = true
                     GROUP BY player
                 ) t2 ON t1.player = t2.player AND t1.score = t2.max_score
                 ORDER BY t1.score DESC;
             `).all();
 
+                    // AND submittedTime < ${time ?? 0}
 
             // dedupe when a score has improved
             for (let i = 0; i < listing.length; i++) {
@@ -196,11 +197,11 @@ const passSalt =
 
 function addEditor({ name, password }) {
     db.prepare(
-        'INSERT INTO editors (`name`, `password`, `deactivated`) VALUES (:name, :password, 1)',
+        'INSERT INTO editors (`name`, `password`, `active`) VALUES (:name, :password, 0)',
     ).run({
         name,
         password: hashPassword(password),
-    });
+    }).lastInsertRowid;
 }
 
 function authEditor({ name, password }) {
@@ -215,89 +216,9 @@ function authEditor({ name, password }) {
         });
 }
 
-// import
-
-async function importCSV(board) {
-    const { csvParse } = await import('d3-dsv');
-    const data = fs.readFileSync(
-        join(__dirname, '../all_scores.csv'), // (fractal made this file)
-        'utf8',
-    );
-    const listing = csvParse(data);
-
-    // add editors
-    const existingEditors = listEditors().map((d) => d.name);
-
-    listing.forEach(({ editor }) => {
-        if (!existingEditors.includes(editor)) {
-            addEditor({ name: editor, password: 'N/A' });
-            existingEditors.push(editor);
-        }
-    });
-
-    const editors = listEditors();
-
-    const importScore = item => {
-        const editor = editors.find((d) => d.name === item.editor);
-
-        const score = board.addScore(item);
-
-        score.setEditor(editor.id);
-
-        // set legacy time
-        db.prepare(
-            `
-            UPDATE ${board.tableName}
-            SET submittedTime = :time,
-                verifiedTime = :time,
-                modifiedTime = CURRENT_TIMESTAMP,
-                verified = 1
-            WHERE id = :scoreId
-        `,
-        ).run({ scoreId: score.id, time: item.time });
-    };
-
-    // add scores & remap keys
-
-    listing.forEach((item) => {
-        item.proofLevel = item['proof level'];
-        item.proof = item['proof link'];
-
-        importScore(item);
-    });
-
-    // handle vidpb
-
-    listing.forEach(item => {
-        const vidPB = item['vid pb'];
-        if (vidPB) {
-            const existing = db.prepare(`SELECT * FROM ${board.tableName} WHERE score = ${vidPB} AND proofLevel LIKE '%Video%'`).get();
-            if (!existing) {
-                importScore({
-                    ...item,
-                    time: item.time - (300 * 12),
-                    proofLevel: 'Video',
-                    proof: 'vid pb column from google sheets'
-                })
-            }
-        }
-    });
-}
-
-// init
-
-if (!hasDB) {
-    addBoard({
-        name: 'NTSC',
-        key: 'default',
-        type: 'score',
-    });
-
-    importCSV(new Board(listBoards()[0])).catch(console.error);
-}
-
 // API
 module.exports = {
+    db,
     Board,
     Score,
     addBoard,
@@ -305,5 +226,4 @@ module.exports = {
     listEditors,
     addEditor,
     authEditor,
-    importCSV,
 };
