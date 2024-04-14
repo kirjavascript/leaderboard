@@ -3,6 +3,8 @@ const { join } = require('path');
 const { JSDOM } = require('jsdom');
 
 module.exports = async function importCSV(api) {
+    // export old leaderboard as HTML and put in src/import/NES Tetris Leaderboards
+
     api.addBoard({
         name: 'NTSC',
         key: 'default',
@@ -81,9 +83,8 @@ module.exports = async function importCSV(api) {
 
     // process 'modern' data from the pending queue
 
-    // export as HTML from the old leaderboard
     const pending = fs.readFileSync(
-        join(__dirname, './Pending Submissions.html'),
+        join(__dirname, './NES Tetris Leaderboards/Pending Submissions.html'),
         'utf8',
     );
 
@@ -124,6 +125,21 @@ module.exports = async function importCSV(api) {
         VALUES (:submittedTime, :player, :score, :style, :proof, :platform, :notes, :editorId, :verified, :rejected, :historical, :proofLevel, :verifiedTime);
     `);
 
+    const checkQuery = api.db.prepare(`
+        SELECT *
+        FROM ${board.tableName}
+        WHERE LOWER(REGEX_REPLACE(player, '[^a-zA-Z0-9]', '')) = LOWER(REGEX_REPLACE(:player, '[^a-zA-Z0-9]', ''))
+        AND score = :score
+        AND REPLACE(proofLevel, '+', '') = REPLACE(:proofLevel, '+', '');
+    `);
+
+    const updateNotes = api.db.prepare(`
+        UPDATE ${board.tableName}
+        SET notes = :notes,
+        proofLevel = :proofLevel
+        WHERE id = :id
+    `);
+
     rows.forEach(row => {
         const cols = [...row.querySelectorAll('td')];
 
@@ -145,15 +161,32 @@ module.exports = async function importCSV(api) {
             player: player.replace(/ ?\(.*?\)/, ''),
         };
 
-        queueInsert.run(entry);
+        const existing = checkQuery.get(entry);
+
+        if (existing) {
+            updateNotes.run({
+                id: existing.id,
+                notes: entry.notes,
+                proofLevel: entry.proofLevel,
+            })
+        } else {
+            queueInsert.run(entry);
+        }
+
     });
 
     // grab current state of the board and apply over the existing DB
 
     importGoogleBoard(unknownId, api, board, fs.readFileSync(
-        join(__dirname, './NTSC 0-19 Score.html'),
+        join(__dirname, './NES Tetris Leaderboards/NTSC 0-19 Score.html'),
         'utf8',
     ));
+
+    api.db.prepare(`
+        UPDATE ${board.tableName}
+        SET player = REPLACE(player, 'Blue_scuti', 'Blue Scuti')
+        WHERE player LIKE '%Blue%';
+    `).run();
 }
 
 function importGoogleBoard(unknownId, api, board, file) {

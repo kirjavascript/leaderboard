@@ -2,3 +2,4 @@ salt
 *.db*
 node_modules
 dist
+src/import/NES Tetris Leaderboards
