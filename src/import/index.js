@@ -4,7 +4,6 @@ const { JSDOM } = require('jsdom');
 
 module.exports = async function importCSV(api) {
     // export old leaderboard as HTML and put in src/import/NES Tetris Leaderboards
-
     const importBoards = {
         'NTSC 0-19 Score': { name: 'NTSC', key: 'default', type: 'score' },
         'NTSC 19 Score': { name: 'NTSC19', key: 'ntsc19', type: 'score' },
@@ -186,6 +185,9 @@ module.exports = async function importCSV(api) {
 
         const [submittedTime, player, _board, score, style, proof, platform, _type, notes, proofLevel] = cols.map(d => d.textContent);
 
+        if (importBoards[boardName].type === 'level' && score > 255) return;
+        if (importBoards[boardName].type.includes('lines') && score > 10000) return;
+
         const entry = {
             submittedTime, score, style, proof, platform, notes, proofLevel,
             verified: +(color === 'green'),
@@ -243,7 +245,6 @@ function importGoogleBoard(unknownId, api, board, file) {
     const notesIndex = header.findIndex(d => d.includes('Notes'));
     const proofIndex = header.findIndex(d => d.includes('Proof Link'));
     const vidPBIndex = header.findIndex(d => d.includes('VidPB'));
-
 
     const checkQuery = api.db.prepare(`
         SELECT *

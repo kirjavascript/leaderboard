@@ -14,6 +14,7 @@ const columns = {
 
 export default function ScoreTable({ listing, board }) {
     const cols = columns[board().type];
+    // TODO: make reactive
 
     return (
         <table>

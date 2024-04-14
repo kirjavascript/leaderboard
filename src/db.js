@@ -145,7 +145,7 @@ class Board {
                     AND rejected = false
                     GROUP BY player_norm
                 ) t2 ON LOWER(REPLACE(t1.player, ' ', '')) = t2.player_norm AND t1.score = t2.max_score
-                ORDER BY t1.score DESC;
+                ORDER BY t1.score ${this.type === 'linesLow' ? 'ASC' : 'DESC'};
             `).all();
 
                     // AND submittedTime < ${time ?? 0}
