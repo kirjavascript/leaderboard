@@ -7,6 +7,8 @@ const db = require('better-sqlite3')(dbPath);
 
 db.pragma('journal_mode = WAL'); // only one connection at a time is made
 
+db.function('REGEX_REPLACE', (str, pattern, replacement) => str.replace(new RegExp(pattern, 'g'), replacement));
+
 !hasDB &&
     db.exec(`
     CREATE TABLE boards (
@@ -127,22 +129,23 @@ class Board {
             id: this.addScoreQuery.run(entry).lastInsertRowid,
         });
 
-        this.query = (time) => {
+        this.query = (query) => {
             const listing = db.prepare(`
                 SELECT t1.*
                 FROM ${this.tableName} t1
                 JOIN (
-                    SELECT player, MAX(score) AS max_score
+                    SELECT LOWER(REPLACE(player, ' ', '')) AS player_norm, MAX(score) AS max_score
                     FROM ${this.tableName}
                     WHERE verified = true
-                    GROUP BY player
-                ) t2 ON t1.player = t2.player AND t1.score = t2.max_score
+                    AND rejected = false
+                    GROUP BY player_norm
+                ) t2 ON LOWER(REPLACE(t1.player, ' ', '')) = t2.player_norm AND t1.score = t2.max_score
                 ORDER BY t1.score DESC;
             `).all();
 
                     // AND submittedTime < ${time ?? 0}
 
-            // dedupe when a score has improved
+            // dedupe when a score has improved proof
             for (let i = 0; i < listing.length; i++) {
                 const cur = listing[i];
                 const next = listing[i + 1];
@@ -196,7 +199,7 @@ const passSalt =
     })();
 
 function addEditor({ name, password }) {
-    db.prepare(
+    return db.prepare(
         'INSERT INTO editors (`name`, `password`, `active`) VALUES (:name, :password, 0)',
     ).run({
         name,

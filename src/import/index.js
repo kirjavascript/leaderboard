@@ -1,5 +1,6 @@
 const fs = require('fs');
 const { join } = require('path');
+const { JSDOM } = require('jsdom');
 
 module.exports = async function importCSV(api) {
     api.addBoard({
@@ -31,6 +32,8 @@ module.exports = async function importCSV(api) {
 
     const importScore = item => {
         const editor = editors.find((d) => d.name === item.editor);
+
+        item.player = item.player.replace(/ ?\(.*?\)/, '');
 
         const score = board.addScore(item);
 
@@ -76,7 +79,7 @@ module.exports = async function importCSV(api) {
         }
     });
 
-    // process 'modern' data
+    // process 'modern' data from the pending queue
 
     // export as HTML from the old leaderboard
     const pending = fs.readFileSync(
@@ -110,13 +113,16 @@ module.exports = async function importCSV(api) {
 
     // extract scores
 
-    const { JSDOM } = require('jsdom');
-
     const { window: { document } } = new JSDOM(pending);
 
     const rows = [...document.querySelectorAll('tr')].slice(3);
 
-    const unknownID = api.addEditor({ name: 'unknown', password: 'N/A' });
+    const unknownId = api.addEditor({ name: 'unknown', password: 'N/A' });
+
+    const queueInsert = api.db.prepare(`
+        INSERT INTO ${board.tableName} (submittedTime, player, score, style, proof, platform, notes, editorId, verified, rejected, historical, proofLevel, verifiedTime)
+        VALUES (:submittedTime, :player, :score, :style, :proof, :platform, :notes, :editorId, :verified, :rejected, :historical, :proofLevel, :verifiedTime);
+    `);
 
     rows.forEach(row => {
         const cols = [...row.querySelectorAll('td')];
@@ -125,8 +131,126 @@ module.exports = async function importCSV(api) {
 
         if (!cols[0].textContent || color === 'orange') return;
 
+        if (cols[2].textContent !== 'NTSC 0-19 Score') return;
 
-        console.log(cols.map(d => d.textContent).join(','));
+        const [submittedTime, player, _board, score, style, proof, platform, _type, notes, proofLevel] = cols.map(d => d.textContent);
+
+        const entry = {
+            submittedTime, score, style, proof, platform, notes, proofLevel,
+            verified: +(color === 'green'),
+            rejected: +(color === 'red'),
+            historical: 1,
+            editorId: color === 'green' ? unknownId : null,
+            verifiedTime: color === 'green' ? submittedTime : null,
+            player: player.replace(/ ?\(.*?\)/, ''),
+        };
+
+        queueInsert.run(entry);
+    });
+
+    // grab current state of the board and apply over the existing DB
+
+    importGoogleBoard(unknownId, api, board, fs.readFileSync(
+        join(__dirname, './NTSC 0-19 Score.html'),
+        'utf8',
+    ));
+}
+
+function importGoogleBoard(unknownId, api, board, file) {
+    const { window: { document } } = new JSDOM(file);
+
+    const rows = [...document.querySelectorAll('tr')];
+
+    const dataRows = rows.slice(3);
+    const header = [...rows[1].querySelectorAll('td')].map(d => d.textContent);
+
+    const playerIndex = header.findIndex(d => d.includes('Name'));
+    const scoreIndex = header.findIndex(d => d.includes('Score') || d.includes('Level') || d.includes('Lines'));
+    const platformIndex = header.findIndex(d => d.includes('Platform'));
+    const styleIndex = header.findIndex(d => d.includes('Style'));
+    const proofLevelIndex = header.findIndex(d => d.includes('Proof'));
+    const notesIndex = header.findIndex(d => d.includes('Notes'));
+    const proofIndex = header.findIndex(d => d.includes('Proof Link'));
+    const vidPBIndex = header.findIndex(d => d.includes('VidPB'));
+
+    const checkQuery = api.db.prepare(`
+        SELECT *
+        FROM ${board.tableName}
+        WHERE LOWER(REGEX_REPLACE(player, '[^a-zA-Z0-9]', '')) = LOWER(REGEX_REPLACE(:player, '[^a-zA-Z0-9]', ''))
+        AND score = :score
+        AND REPLACE(proofLevel, '+', '') = REPLACE(:proofLevel, '+', '');
+    `);
+
+    const updateNotes = api.db.prepare(`
+        UPDATE ${board.tableName}
+        SET notes = :notes,
+        proofLevel = :proofLevel
+        WHERE id = :id
+    `);
+
+    const sheetInsert = api.db.prepare(`
+        INSERT INTO ${board.tableName} (submittedTime, player, score, style, proof, platform, notes, editorId, verified, rejected, historical, proofLevel, verifiedTime)
+        VALUES (:submittedTime, :player, :score, :style, :proof, :platform, :notes, :editorId, :verified, :rejected, :historical, :proofLevel, :verifiedTime);
+    `);
+
+    function importGoogleEntry(entry) {
+        const existing = checkQuery.get(entry);
+
+        if (existing) {
+            updateNotes.run({
+                id: existing.id,
+                notes: entry.notes,
+                proofLevel: entry.proofLevel,
+            })
+        } else {
+            sheetInsert.run(entry);
+        }
+    }
+
+    dataRows.forEach(row => {
+        const cols = [...row.querySelectorAll('td')];
+
+        const entry = {
+            player: cols[playerIndex].textContent,
+            score: cols[scoreIndex].textContent,
+            platform: cols[platformIndex].textContent,
+            proofLevel: cols[proofLevelIndex].textContent,
+            style: cols[styleIndex].textContent,
+            notes: cols[notesIndex].textContent,
+            proof: cols[proofIndex].querySelector('a')?.href,
+
+            submittedTime: +new Date,
+            verifiedTime: +new Date,
+            editorId: unknownId,
+            verified: 1,
+            rejected: 0,
+            historical: 1,
+        };
+
+        if (cols[notesIndex].getAttribute('colspan') != '2') {
+            entry.proof = cols[proofIndex + 1].querySelector('a')?.href;
+            const extraNotes = cols[notesIndex + 1].textContent;
+            if (extraNotes.trim().length) {
+                entry.notes += ', ' + cols[notesIndex + 1].textContent;
+            }
+        }
+
+        importGoogleEntry(entry);
+
+        if (vidPBIndex !== -1) {
+            const vidPB = cols[vidPBIndex].textContent;
+
+            if (vidPB != entry.score) {
+                importGoogleEntry({
+                    ...entry,
+                    score: vidPB,
+                    proofLevel: 'Video',
+                    proof: 'vid pb column from google sheets',
+                });
+            }
+
+        }
 
     });
+
 }
