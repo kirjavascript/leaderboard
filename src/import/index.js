@@ -5,13 +5,24 @@ const { JSDOM } = require('jsdom');
 module.exports = async function importCSV(api) {
     // export old leaderboard as HTML and put in src/import/NES Tetris Leaderboards
 
-    api.addBoard({
-        name: 'NTSC',
-        key: 'default',
-        type: 'score',
-    });
+    const importBoards = {
+        'NTSC 0-19 Score': { name: 'NTSC', key: 'default', type: 'score' },
+        'NTSC 19 Score': { name: 'NTSC19', key: 'ntsc19', type: 'score' },
+        'NTSC 29 Score': { name: 'NTSC29', key: 'ntsc29', type: 'score' },
+        'NTSC 29 Lines': { name: 'NTSC29', key: 'ntsc29lines', type: 'lines' },
+        'NTSC Level': { name: 'NTSC Level', key: 'ntsclevel', type: 'level' },
+        'NTSC Maxout Lines': { name: 'NTSC Maxout Lines', key: 'ntscmxlines', type: 'linesLow' },
+        'NTSC 29 Maxout Lines': { name: 'NTSC 29 Maxout Lines', key: 'ntsc29mxlines', type: 'linesLow' },
+        ' NTSC Rollover Lines': { name: 'NTSC Rollover Lines', key: 'ntscrolllines', type: 'linesLow' },
+        'PAL 0-19 Score': { name: 'PAL', key: 'pal', type: 'score' },
+        'PAL 19 Score': { name: 'PAL19', key: 'pal19', type: 'score' },
+    };
 
-    const board = new api.Board(api.listBoards()[0])
+    Object.values(importBoards).forEach(value => {
+        api.addBoard(value);
+    })
+
+    const board = new api.Board(importBoards['NTSC 0-19 Score'])
 
     const { csvParse } = await import('d3-dsv');
     const data = fs.readFileSync(
@@ -120,25 +131,45 @@ module.exports = async function importCSV(api) {
 
     const unknownId = api.addEditor({ name: 'unknown', password: 'N/A' });
 
-    const queueInsert = api.db.prepare(`
-        INSERT INTO ${board.tableName} (submittedTime, player, score, style, proof, platform, notes, editorId, verified, rejected, historical, proofLevel, verifiedTime)
-        VALUES (:submittedTime, :player, :score, :style, :proof, :platform, :notes, :editorId, :verified, :rejected, :historical, :proofLevel, :verifiedTime);
-    `);
+    const queryMap = {};
+    function getQueries(boardName) {
+        if (boardName in queryMap) return queryMap[boardName];
+        if (!importBoards[boardName]) throw new Error(`no such board ${boardName}`);
 
-    const checkQuery = api.db.prepare(`
-        SELECT *
-        FROM ${board.tableName}
-        WHERE LOWER(REGEX_REPLACE(player, '[^a-zA-Z0-9]', '')) = LOWER(REGEX_REPLACE(:player, '[^a-zA-Z0-9]', ''))
-        AND score = :score
-        AND REPLACE(proofLevel, '+', '') = REPLACE(:proofLevel, '+', '');
-    `);
+        const { tableName } = new api.Board(importBoards[boardName]);
 
-    const updateNotes = api.db.prepare(`
-        UPDATE ${board.tableName}
-        SET notes = :notes,
-        proofLevel = :proofLevel
-        WHERE id = :id
-    `);
+        const queueInsert = api.db.prepare(`
+            INSERT INTO ${tableName} (submittedTime, player, score, style, proof, platform, notes, editorId, verified, rejected, historical, proofLevel, verifiedTime)
+            VALUES (:submittedTime, :player, :score, :style, :proof, :platform, :notes, :editorId, :verified, :rejected, :historical, :proofLevel, :verifiedTime);
+        `);
+
+        const checkQuery = api.db.prepare(`
+            SELECT *
+            FROM ${tableName}
+            WHERE LOWER(REGEX_REPLACE(player, '[^a-zA-Z0-9]', '')) = LOWER(REGEX_REPLACE(:player, '[^a-zA-Z0-9]', ''))
+            AND score = :score
+            AND REPLACE(proofLevel, '+', '') = REPLACE(:proofLevel, '+', '');
+        `);
+
+        const updateNotes = api.db.prepare(`
+            UPDATE ${tableName}
+            SET notes = :notes,
+            proofLevel = :proofLevel
+            WHERE id = :id
+        `);
+
+
+        const queries = {
+            queueInsert,
+            checkQuery,
+            updateNotes,
+        };
+
+        queryMap[boardName] = queries;
+
+        return queries
+    }
+
 
     rows.forEach(row => {
         const cols = [...row.querySelectorAll('td')];
@@ -147,7 +178,11 @@ module.exports = async function importCSV(api) {
 
         if (!cols[0].textContent || color === 'orange') return;
 
-        if (cols[2].textContent !== 'NTSC 0-19 Score') return;
+        const boardName = cols[2].textContent?.replace(/NTSC Rollover Lines/, ' NTSC Rollover Lines').replace(/29 Start/, '29');
+
+        if (['PAL 19 Lines', 'NTSC RNG Manip'].includes(boardName)) return;
+
+        const { checkQuery, updateNotes, queueInsert } = getQueries(boardName);
 
         const [submittedTime, player, _board, score, style, proof, platform, _type, notes, proofLevel] = cols.map(d => d.textContent);
 
@@ -177,10 +212,13 @@ module.exports = async function importCSV(api) {
 
     // grab current state of the board and apply over the existing DB
 
-    importGoogleBoard(unknownId, api, board, fs.readFileSync(
-        join(__dirname, './NES Tetris Leaderboards/NTSC 0-19 Score.html'),
-        'utf8',
-    ));
+    Object.entries(importBoards).forEach(([name, info]) => {
+        const board = new api.Board(info);
+        importGoogleBoard(unknownId, api, board, fs.readFileSync(
+            join(__dirname, `./NES Tetris Leaderboards/${name}.html`),
+            'utf8',
+        ));
+    })
 
     api.db.prepare(`
         UPDATE ${board.tableName}
@@ -195,7 +233,7 @@ function importGoogleBoard(unknownId, api, board, file) {
     const rows = [...document.querySelectorAll('tr')];
 
     const dataRows = rows.slice(3);
-    const header = [...rows[1].querySelectorAll('td')].map(d => d.textContent);
+    const header = [...rows[1].querySelectorAll('td')].map(d => d.textContent).filter((d, i) => i === 0 || d);
 
     const playerIndex = header.findIndex(d => d.includes('Name'));
     const scoreIndex = header.findIndex(d => d.includes('Score') || d.includes('Level') || d.includes('Lines'));
@@ -205,6 +243,7 @@ function importGoogleBoard(unknownId, api, board, file) {
     const notesIndex = header.findIndex(d => d.includes('Notes'));
     const proofIndex = header.findIndex(d => d.includes('Proof Link'));
     const vidPBIndex = header.findIndex(d => d.includes('VidPB'));
+
 
     const checkQuery = api.db.prepare(`
         SELECT *
@@ -250,7 +289,7 @@ function importGoogleBoard(unknownId, api, board, file) {
             proofLevel: cols[proofLevelIndex].textContent,
             style: cols[styleIndex].textContent,
             notes: cols[notesIndex].textContent,
-            proof: cols[proofIndex].querySelector('a')?.href,
+            proof: cols[proofIndex]?.querySelector('a')?.href,
 
             submittedTime: +new Date,
             verifiedTime: +new Date,
@@ -261,11 +300,9 @@ function importGoogleBoard(unknownId, api, board, file) {
         };
 
         if (cols[notesIndex].getAttribute('colspan') != '2') {
-            entry.proof = cols[proofIndex + 1].querySelector('a')?.href;
+            entry.proof = cols[proofIndex + 1]?.querySelector('a')?.href;
             const extraNotes = cols[notesIndex + 1].textContent;
-            if (extraNotes.trim().length) {
-                entry.notes += ', ' + cols[notesIndex + 1].textContent;
-            }
+            entry.notes = [entry.notes, extraNotes].map(d=>d.trim()).filter(d=>d).join(', ');
         }
 
         importGoogleEntry(entry);
@@ -281,9 +318,7 @@ function importGoogleBoard(unknownId, api, board, file) {
                     proof: 'vid pb column from google sheets',
                 });
             }
-
         }
-
     });
 
 }

@@ -5,6 +5,11 @@ const dbPath = join(__dirname, `/../scores.db`);
 const hasDB = fs.existsSync(dbPath);
 const db = require('better-sqlite3')(dbPath);
 
+process.on('exit', () => db.close());
+process.on('SIGHUP', () => process.exit(128 + 1));
+process.on('SIGINT', () => process.exit(128 + 2));
+process.on('SIGTERM', () => process.exit(128 + 15));
+
 db.pragma('journal_mode = WAL'); // only one connection at a time is made
 
 db.function('REGEX_REPLACE', (str, pattern, replacement) => str.replace(new RegExp(pattern, 'g'), replacement));
@@ -55,7 +60,7 @@ db.function('REGEX_REPLACE', (str, pattern, replacement) => str.replace(new RegE
 
 // boards
 
-const boardTypes = ['score', 'level', 'linesHigh', 'linesLow'];
+const boardTypes = ['score', 'level', 'lines', 'linesLow'];
 
 function addBoard({ name, key, type }) {
     if (!boardTypes.includes(type)) throw new Error('invalid boardtype');

@@ -5,6 +5,8 @@ const columns = {
         ['Platform', 'platform'],
         ['Style', 'style'],
         ['Proof', 'proofLevel'],
+        ['tmp', 'notes'],
+        ['tmp2', 'proof'],
     ],
 };
 
