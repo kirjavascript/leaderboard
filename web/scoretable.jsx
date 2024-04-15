@@ -1,45 +1,58 @@
+const getBaseColumns = scoreCol => [
+    ['Player', 'player'],
+    scoreCol,
+    ['Platform', 'platform'],
+    ['Style', 'style'],
+    ['Proof', 'proofLevel'],
+];
+
 const columns = {
-    score: [
-        ['Player', 'player'],
-        ['Score', 'score'],
-        ['Platform', 'platform'],
-        ['Style', 'style'],
-        ['Proof', 'proofLevel'],
-        ['tmp', 'notes'],
-        ['tmp2', 'proof'],
-    ],
+    score: getBaseColumns(['Score', 'score']),
+    level: getBaseColumns(['Level', 'score']),
+    lines: getBaseColumns(['Lines', 'score']),
+    linesLow: getBaseColumns(['Lines', 'score']),
 };
 
-// TODO: if all the columns are the same, hide the column
-
 export default function ScoreTable({ listing, board }) {
-    const cols = columns[board().type];
-    // TODO: make reactive
+    const cols = () => columns[board().type];
 
     return (
         <table>
             <thead>
                 <tr>
                     <th />
-                    <For each={cols}>{([name]) => <th>{name}</th>}</For>
+                    <For each={cols()}>{([name]) => <th>{name}</th>}</For>
                 </tr>
             </thead>
             <tbody>
                 <For
-                    each={listing()}
+                    each={rank(listing())}
                 >
-                    {(item) => (
+                    {([rank, entry]) => (
                         <tr class="row-score">
-                            <td class="index">index</td>
-                            <For each={cols}>
+                            <td class="index">{rank}</td>
+                            <For each={cols()}>
                                 {([, property]) => (
-                                    <td class={property}>{item[property]} </td>
+                                    <td class={property}>{entry[property]} </td>
                                 )}
                             </For>
+                            <td><button>view</button></td>
                         </tr>
                     )}
                 </For>
             </tbody>
         </table>
     );
+}
+
+function rank(listing) {
+    let rank = 0;
+    let lastScore;
+    return listing.map(entry => {
+        if (lastScore !== entry.score) {
+            rank++;
+        }
+        lastScore = entry.score;
+        return [rank, entry];
+    });
 }

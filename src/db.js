@@ -14,6 +14,12 @@ db.pragma('journal_mode = WAL'); // only one connection at a time is made
 
 db.function('REGEX_REPLACE', (str, pattern, replacement) => str.replace(new RegExp(pattern, 'g'), replacement));
 
+const passSalt =
+    fs.readFileSync(join(__dirname, '/../salt'), 'utf8') ||
+    (() => {
+        throw new Error('provide salt');
+    })();
+
 !hasDB &&
     db.exec(`
     CREATE TABLE boards (
@@ -45,6 +51,7 @@ db.function('REGEX_REPLACE', (str, pattern, replacement) => str.replace(new RegE
     INSERT INTO tags (name) VALUES ('SPS');
     INSERT INTO tags (name) VALUES ('speedhack');
     INSERT INTO tags (name) VALUES ('crash');
+    INSERT INTO tags (name) VALUES ('crash fix');
     INSERT INTO tags (name) VALUES ('recalculated crash');
     INSERT INTO tags (name) VALUES ('recalculated score');
     INSERT INTO tags (name) VALUES ('masters');
@@ -124,14 +131,14 @@ class Board {
         this.type = type;
         this.tableName = hashBoardName(key);
 
-        this.addScoreQuery = db.prepare(`
+        const addScoreQuery = db.prepare(`
             INSERT INTO ${this.tableName} (score, player, platform, proofLevel, style, notes, proof, editorId, verified)
             VALUES (:score, :player, :platform, :proofLevel, :style, :notes, :proof, NULL, 0);
         `);
 
         this.addScore = (entry) => new Score({
             tableName: this.tableName,
-            id: this.addScoreQuery.run(entry).lastInsertRowid,
+            id: addScoreQuery.run(entry).lastInsertRowid,
         });
 
         this.query = (query) => {
@@ -161,6 +168,15 @@ class Board {
 
             return listing.filter(Boolean);
         };
+
+        const pendingQuery = db.prepare(`
+            SELECT *
+            FROM ${this.tableName}
+            WHERE verified = false
+            AND rejected = false
+        `);
+
+        this.pending = () => pendingQuery.all();
     }
 }
 
@@ -190,6 +206,21 @@ class Score {
 const listQuery = db.prepare('SELECT name, key, type from boards WHERE public = 1');
 const listBoards = () => listQuery.all();
 
+// submit queue
+
+function pendingSubmissions() {
+    const boards = listBoards().map(board => new Board(board));
+
+    const listing = [];
+
+    boards.forEach(board => {
+        const pending = board.pending().map(obj => ({ board: board.key, ...obj }));
+        listing.push(...pending);
+    });
+
+    return listing.sort((a, b) => +new Date(a.submittedTime) - +new Date(b.submittedTime));
+}
+
 // editors
 
 const listEditQuery = db.prepare('SELECT * from editors');
@@ -197,11 +228,6 @@ const listEditors = () => listEditQuery.all();
 
 const hashPassword = (pass) =>
     crypto.createHmac('sha256', passSalt).update(pass).digest('hex');
-const passSalt =
-    fs.readFileSync(join(__dirname, '/../salt'), 'utf8') ||
-    (() => {
-        throw new Error('provide salt file');
-    })();
 
 function addEditor({ name, password }) {
     return db.prepare(
@@ -232,6 +258,7 @@ module.exports = {
     addBoard,
     listBoards,
     listEditors,
+    pendingSubmissions,
     addEditor,
     authEditor,
 };

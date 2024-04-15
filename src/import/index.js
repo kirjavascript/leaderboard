@@ -8,7 +8,7 @@ module.exports = async function importCSV(api) {
         'NTSC 0-19 Score': { name: 'NTSC', key: 'default', type: 'score' },
         'NTSC 19 Score': { name: 'NTSC19', key: 'ntsc19', type: 'score' },
         'NTSC 29 Score': { name: 'NTSC29', key: 'ntsc29', type: 'score' },
-        'NTSC 29 Lines': { name: 'NTSC29', key: 'ntsc29lines', type: 'lines' },
+        'NTSC 29 Lines': { name: 'NTSC29 Lines', key: 'ntsc29lines', type: 'lines' },
         'NTSC Level': { name: 'NTSC Level', key: 'ntsclevel', type: 'level' },
         'NTSC Maxout Lines': { name: 'NTSC Maxout Lines', key: 'ntscmxlines', type: 'linesLow' },
         'NTSC 29 Maxout Lines': { name: 'NTSC 29 Maxout Lines', key: 'ntsc29mxlines', type: 'linesLow' },

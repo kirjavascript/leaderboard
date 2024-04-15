@@ -6,8 +6,10 @@ export default function () {
     const [board, setBoard] = createSignal(undefined);
     const [listing, setListing] = createSignal([]);
 
+    // TODO: URL routing for state
+
     createEffect(() => {
-        fetch('/boards')
+        fetch('/api/boards')
             .then(res =>res.json())
             .then(setBoards)
             .then(() => {
@@ -19,7 +21,7 @@ export default function () {
     createEffect(() => {
         if (!board()) return;
 
-        fetch('/board', {
+        fetch('/api/board', {
             method: 'POST',
             body: JSON.stringify(board()),
         })
@@ -49,8 +51,6 @@ export default function () {
             {board() && <>
                 <ScoreTable listing={listing} board={board} />
             </>}
-            <pre> {JSON.stringify(board(),0,4)}</pre>
-            <pre> {JSON.stringify(listing(),0,4)}</pre>
         </>
     );
 }

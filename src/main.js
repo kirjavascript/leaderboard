@@ -22,8 +22,9 @@ app.use('/', express.static(join(__dirname, '/../dist')));
 
 // API
 
-app.get('/boards', (_req, res) => res.json(api.listBoards()));
-app.post('/board', (req, res) => res.json(new api.Board(req.body).query(req.query)));
+app.get('/api/boards', (_req, res) => res.json(api.listBoards()));
+app.post('/api/board', (req, res) => res.json(new api.Board(req.body).query(req.query)));
+app.get('/api/queue', (_req, res) => res.json(api.pendingSubmissions()));
 
 // routing
 
