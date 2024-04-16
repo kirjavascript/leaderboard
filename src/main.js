@@ -14,9 +14,7 @@ if (process.argv.includes('--unsafe-import')) {
 
 const app = express();
 
-app.use(express.json({
-    type: '*/*',
-}));
+app.use(express.json({ type: '*/*' }));
 app.use('/', express.static(join(__dirname, '/../static')));
 app.use('/', express.static(join(__dirname, '/../dist')));
 
