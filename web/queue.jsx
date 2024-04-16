@@ -26,7 +26,7 @@ export default function () {
                     <tr>
                         <th>Board</th>
                         <th>Name</th>
-                        <th>Value</th>
+                        <th>Score</th>
                         <th>Style</th>
                         <th>Proof</th>
                     </tr>
@@ -37,12 +37,12 @@ export default function () {
                     >
                         {(entry) => (
                             <tr class="row-score">
-                                <td>{boards().find(d => d.key == entry.board).name}</td>
+                                <td>{boards().find(d => d.key === entry.board).name}</td>
                                 <td>{entry.player}</td>
                                 <td>{entry.score}</td>
                                 <td>{entry.style}</td>
                                 <td>{entry.proofLevel}</td>
-                                <td><button>edit</button></td>
+                                <td><button>view</button></td>
                             </tr>
                         )}
                     </For>

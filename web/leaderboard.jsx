@@ -1,22 +1,26 @@
 import { For, createSignal, createEffect } from 'solid-js';
+import { useSearchParams } from '@solidjs/router';
+
 import ScoreTable from './scoretable';
 
 export default function () {
+    const [params, setParams] = useSearchParams();
+
     const [boards, setBoards] = createSignal([]);
     const [board, setBoard] = createSignal(undefined);
     const [listing, setListing] = createSignal([]);
 
-    // TODO: URL routing for state
-
-    createEffect(() => {
-        fetch('/api/boards')
-            .then(res =>res.json())
-            .then(setBoards)
-            .then(() => {
+    fetch('/api/boards')
+        .then(res => res.json())
+        .then(setBoards)
+        .then(() => {
+            if (!params.board) {
                 setBoard(boards()[0]);
-            })
-            .catch(console.error);
-    });
+            } else {
+                setBoard(boards().find(b => b.key === params.board));
+            }
+        })
+        .catch(console.error);
 
     createEffect(() => {
         if (!board()) return;
@@ -33,9 +37,11 @@ export default function () {
     return (
         <>
             <select
-                onChange={(e) =>
-                    setBoard(boards()[e.target.selectedIndex])
-                }
+                onChange={(e) => {
+                    const board = boards()[e.target.selectedIndex];
+                    setBoard(board);
+                    setParams({ board: board.key })
+                }}
             >
                 <For each={boards()}>
                     {({ name, key }) => (
