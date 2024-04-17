@@ -51,6 +51,15 @@ select {
     box-sizing: border-box;
 }
 
+button {
+    border: 2px solid $white;
+    padding: 0 10px;
+    background-color: $black;
+    color: $white;
+    font-weight: bold;
+    font-family: inherit;
+}
+
 tr, td {
     text-align: center;
 }
@@ -87,6 +96,7 @@ label {
 }
 
 .links {
+    text-align: right;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;

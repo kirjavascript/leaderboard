@@ -11,13 +11,13 @@ export default function () {
     const [listing, setListing] = createSignal([]);
 
     fetch('/api/boards')
-        .then(res => res.json())
+        .then((res) => res.json())
         .then(setBoards)
         .then(() => {
             if (!params.board) {
                 setBoard(boards()[0]);
             } else {
-                setBoard(boards().find(b => b.key === params.board));
+                setBoard(boards().find((b) => b.key === params.board));
             }
         })
         .catch(console.error);
@@ -29,34 +29,40 @@ export default function () {
             method: 'POST',
             body: JSON.stringify(board()),
         })
-            .then(res => res.json())
+            .then((res) => res.json())
             .then(setListing)
             .catch(console.error);
     });
 
     return (
         <>
-            <select
-                onChange={(e) => {
-                    const board = boards()[e.target.selectedIndex];
-                    setBoard(board);
-                    setParams({ board: board.key })
-                }}
-            >
-                <For each={boards()}>
-                    {({ name, key }) => (
-                        <option
-                            value={key}
-                            selected={key === board()?.key}
-                        >
-                            {name}
-                        </option>
-                    )}
-                </For>
-            </select>
-            {board() && <>
-                <ScoreTable listing={listing} board={board} />
-            </>}
+            <div class="menu">
+                <select
+                    onChange={(e) => {
+                        const board = boards()[e.target.selectedIndex];
+                        setBoard(board);
+                        setParams({ board: board.key });
+                    }}
+                >
+                    <For each={boards()}>
+                        {({ name, key }) => (
+                            <option value={key} selected={key === board()?.key}>
+                                {name}
+                            </option>
+                        )}
+                    </For>
+                </select>
+                <div class="links">
+                    <a href="/submit">submit scores</a>
+                    <br/>
+                    <a href="/queue">view queue</a>
+                </div>
+            </div>
+            {board() && (
+                <>
+                    <ScoreTable listing={listing} board={board} />
+                </>
+            )}
         </>
     );
 }
