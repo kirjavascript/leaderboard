@@ -1,6 +1,7 @@
 $white: #BBB;
 $black: #111;
 $grey: #333;
+$lightgrey: #222;
 $purple: #66D;
 $page-margin: 10px;
 
@@ -19,7 +20,6 @@ body {
     -moz-osx-font-smoothing: grayscale;
 }
 html, body {
-    // height: 100%;
     background-color: $black;
     color: $white;
     box-sizing: border-box;
@@ -60,20 +60,39 @@ button {
     font-family: inherit;
 }
 
-tr, td {
-    text-align: center;
-}
-td {
-    margin: 0 5px;
-    padding: 5px;
-}
-tr:nth-of-type(odd) td {
-    background-color: #222;
-}
-
-table {
+.table {
+    display: table;
     margin: 20px 0;
     width: 100%;
+    a {
+        text-decoration: none;
+        color: inherit;
+        font-size: inherit;
+    }
+}
+
+.row-header {
+    display: table-row;
+}
+
+.row {
+    display: table-row;
+
+    &:nth-of-type(odd) .cell {
+        background-color: $lightgrey;
+    }
+}
+
+.cell {
+    display: table-cell;
+    text-align: center;
+    margin: 0 5px;
+    padding: 5px;
+    border: 1px solid $black;
+}
+
+.row .cell:hover {
+    background-color: #cccccc;
 }
 
 .menu {
@@ -81,19 +100,19 @@ table {
     justify-content: space-between;
 }
 
-.multi-select {
-    margin: 5px 0;
-    text-align: right;
-}
+// .multi-select {
+//     margin: 5px 0;
+//     text-align: right;
+// }
 
-label {
-    font-size: 12px;
-    padding: 3px 15px;
-}
+// label {
+//     font-size: 12px;
+//     padding: 3px 15px;
+// }
 
-.filter-option {
-    display: inline;
-}
+// .filter-option {
+//     display: inline;
+// }
 
 .links {
     text-align: right;

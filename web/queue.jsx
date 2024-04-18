@@ -6,14 +6,14 @@ export default function () {
 
     createEffect(() => {
         fetch('/api/boards')
-            .then(res =>res.json())
+            .then((res) => res.json())
             .then(setBoards)
             .catch(console.error);
     });
 
     createEffect(() => {
         fetch('/api/queue')
-            .then(res => res.json())
+            .then((res) => res.json())
             .then(setListing)
             .catch(console.error);
     });
@@ -21,33 +21,31 @@ export default function () {
     return (
         <>
             <h1>Submission Queue</h1>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Board</th>
-                        <th>Name</th>
-                        <th>Score</th>
-                        <th>Style</th>
-                        <th>Proof</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <For
-                        each={listing()}
-                    >
-                        {(entry) => (
-                            <tr class="row-score">
-                                <td>{boards().find(d => d.key === entry.board).name}</td>
-                                <td>{entry.player}</td>
-                                <td>{entry.score}</td>
-                                <td>{entry.style}</td>
-                                <td>{entry.proofLevel}</td>
-                                <td><button>view</button></td>
-                            </tr>
-                        )}
-                    </For>
-                </tbody>
-            </table>
+            <div class="table">
+                <div class="row-header">
+                    <div class="cell">Board</div>
+                    <div class="cell">Name</div>
+                    <div class="cell">Score</div>
+                    <div class="cell">Style</div>
+                    <div class="cell">Proof</div>
+                </div>
+                <For each={listing()}>
+                    {(entry) => (
+                        <a class="row">
+                            <div class="cell">
+                                {
+                                    boards().find((d) => d.key === entry.board)
+                                        .name
+                                }
+                            </div>
+                            <div class="cell">{entry.player}</div>
+                            <div class="cell">{entry.score}</div>
+                            <div class="cell">{entry.style}</div>
+                            <div class="cell">{entry.proofLevel}</div>
+                        </a>
+                    )}
+                </For>
+            </div>
         </>
     );
 }

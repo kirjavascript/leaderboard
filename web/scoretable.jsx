@@ -1,4 +1,4 @@
-const getBaseColumns = scoreCol => [
+const getBaseColumns = (scoreCol) => [
     ['Player', 'player'],
     scoreCol,
     ['Platform', 'platform'],
@@ -17,38 +17,33 @@ export default function ScoreTable({ listing, board }) {
     const cols = () => columns[board().type];
 
     return (
-        <table>
-            <thead>
-                <tr>
-                    <th />
-                    <For each={cols()}>{([name]) => <th>{name}</th>}</For>
-                </tr>
-            </thead>
-            <tbody>
-                <For
-                    each={rank(listing())}
-                >
-                    {([rank, entry]) => (
-                        <tr class="row-score">
-                            <td class="index">{rank}</td>
-                            <For each={cols()}>
-                                {([, property]) => (
-                                    <td class={property}>{entry[property]} </td>
-                                )}
-                            </For>
-                            <td><button>view</button></td>
-                        </tr>
-                    )}
+        <div class="table">
+            <div class="row-header">
+                <div class="cell" />
+                <For each={cols()}>
+                    {([name]) => <div class="cell">{name}</div>}
                 </For>
-            </tbody>
-        </table>
+            </div>
+            <For each={rank(listing())}>
+                {([rank, entry]) => (
+                    <a class="row" href="/score/foo">
+                        <div class="cell"> {rank} </div>
+                        <For each={cols()}>
+                            {([, property]) => (
+                                <div class="cell">{entry[property]} </div>
+                            )}
+                        </For>
+                    </a>
+                )}
+            </For>
+        </div>
     );
 }
 
 function rank(listing) {
     let rank = 0;
     let lastScore;
-    return listing.map(entry => {
+    return listing.map((entry) => {
         if (lastScore !== entry.score) {
             rank++;
         }
