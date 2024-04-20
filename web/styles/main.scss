@@ -1,17 +1,13 @@
-$white: #BBB;
-$black: #111;
-$grey: #333;
-$lightgrey: #222;
-$purple: #66D;
-$page-margin: 10px;
-
-$green: #6AA84F;
-$red: #990000;
+@import './vars.scss';
+@import './table.scss';
+@import './youtube.scss';
 
 @font-face {
     font-family: 'PressStart';
     src: url(./font.ttf) format('truetype');
 }
+
+
 
 body {
     margin: 20px;
@@ -60,59 +56,14 @@ button {
     font-family: inherit;
 }
 
-.table {
-    display: table;
-    margin: 20px 0;
-    width: 100%;
-    a {
-        text-decoration: none;
-        color: inherit;
-        font-size: inherit;
-    }
-}
-
-.row-header {
-    display: table-row;
-}
-
-.row {
-    display: table-row;
-
-    &:nth-of-type(odd) {
-        background-color: $lightgrey;
-    }
-}
-
-.cell {
-    display: table-cell;
+.text-center {
     text-align: center;
-    margin: 0 5px;
-    padding: 5px;
-    border: 1px solid $black;
 }
 
-.row:hover {
-    background-color: $grey;
-}
-
-.menu {
+.flex-between {
     display: flex;
     justify-content: space-between;
 }
-
-// .multi-select {
-//     margin: 5px 0;
-//     text-align: right;
-// }
-
-// label {
-//     font-size: 12px;
-//     padding: 3px 15px;
-// }
-
-// .filter-option {
-//     display: inline;
-// }
 
 .links {
     text-align: right;

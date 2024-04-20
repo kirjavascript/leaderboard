@@ -36,7 +36,7 @@ export default function () {
 
     return (
         <>
-            <div class="menu">
+            <div class="flex-between">
                 <select
                     onChange={(e) => {
                         const board = boards()[e.target.selectedIndex];
