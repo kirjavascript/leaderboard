@@ -132,9 +132,10 @@ function hashBoardName(key) {
 }
 
 class Board {
-    constructor({ key, type }) {
+    constructor({ key, type, name }) {
         this.key = key;
         this.type = type;
+        this.name = name;
         this.tableName = hashBoardName(key);
 
         const addScoreQuery = db.prepare(`
@@ -145,6 +146,13 @@ class Board {
         this.addScore = (entry) => new Score({
             tableName: this.tableName,
             id: addScoreQuery.run(entry).lastInsertRowid,
+            board: this,
+        });
+
+        this.getScore = (hash) => new Score({
+            tableName: this.tableName,
+            id: unhashID(hash),
+            board: this,
         });
 
         this.query = (query) => {
@@ -189,9 +197,10 @@ class Board {
 // scores
 
 class Score {
-    constructor({ tableName, id }) {
+    constructor({ tableName, id, board }) {
         this.tableName = tableName;
         this.id = id;
+        this.board = board;
 
         this.setEditorQuery = db.prepare(`
             UPDATE ${this.tableName}
@@ -205,6 +214,24 @@ class Score {
                 scoreId: this.id,
                 editorId,
             });
+
+        const query = db.prepare(`
+            SELECT * FROM ${this.tableName}
+            WHERE id = :id
+        `);
+
+        this.query = () => {
+            const entry = query.get({ id: this.id })
+            if (entry) {
+                delete entry.id;
+                entry.board = {
+                    name: board.name,
+                    key: board.key,
+                    type: board.type,
+                };
+                return entry;
+            }
+        };
     }
 }
 
