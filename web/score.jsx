@@ -88,14 +88,28 @@ function Embed({ getLink }) {
                     url,
                 )}&format=json`,
             )
-                .then((res) => res.json())
+                .then((res) =>
+                    res.status !== 200
+                        ? res.text().then((text) => Promise.reject(text))
+                        : res.json(),
+                )
                 .then((res) => {
                     setEmbed({
-                        type: 'html',
+                        type: 'youtube',
                         value: res.html,
                     });
                 })
-                .catch(console.error);
+                .catch((err) =>
+                    setEmbed({
+                        type: 'error',
+                        value: err,
+                    }),
+                );
+        } else if (hostname.includes('twitch.')) {
+            setEmbed({
+                type: 'twitch',
+                value: link.match(/(\d+)/)?.[0],
+            });
         } else {
             setEmbed({
                 type: 'url',
@@ -106,16 +120,43 @@ function Embed({ getLink }) {
 
     return (
         <Switch fallback={<p class="text-center">Loading embed...</p>}>
+            <Match when={embed().type === 'error'}>
+                <p>
+                    Embed Error: <span class="red">{embed().value}</span>
+                </p>
+            </Match>
             <Match when={embed().type === 'text'}>
                 <p>{embed().value}</p>
             </Match>
-            <Match when={embed().type === 'link'}>
-                <a href={embed().value}>{embed().value}</a>
+            <Match when={embed().type === 'url'}>
+                <a href={embed().value} target="_blank">
+                    {embed().value}
+                </a>
             </Match>
-            <Match when={embed().type === 'html'}>
+            <Match when={embed().type === 'youtube'}>
                 <div class="youtube-wrapper">
                     <div class="youtube">
                         <div class="embed" innerHTML={embed().value} />
+                    </div>
+                </div>
+            </Match>
+            <Match when={embed().type === 'twitch'}>
+                <div class="twitch-wrapper">
+                    <div class="twitch">
+                        <div class="twitch-video">
+                            <iframe
+                                src={`https://player.twitch.tv/?video=${
+                                    embed().value
+                                }&parent=${
+                                    window.location.hostname
+                                }&autoplay=false`}
+                                frameborder="0"
+                                scrolling="no"
+                                height="100%"
+                                width="100%"
+                                allowfullscreen="true"
+                            ></iframe>
+                        </div>
                     </div>
                 </div>
             </Match>

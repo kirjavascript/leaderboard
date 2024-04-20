@@ -1,13 +1,11 @@
 @import './vars.scss';
 @import './table.scss';
-@import './youtube.scss';
+@import './embed.scss';
 
 @font-face {
     font-family: 'PressStart';
     src: url(./font.ttf) format('truetype');
 }
-
-
 
 body {
     margin: 20px;
@@ -58,6 +56,10 @@ button {
 
 .text-center {
     text-align: center;
+}
+
+.red {
+    color: $red;
 }
 
 .flex-between {
