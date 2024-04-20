@@ -3,7 +3,7 @@ const { join } = require('path');
 const { readFileSync } = require('fs');
 
 const devMode = process.argv.includes('--dev');
-const port = process.env.port || 3000;
+const port = process.env.port || 7777;
 
 const api = require('./db');
 require('./build')(devMode);
@@ -22,6 +22,14 @@ app.use('/', express.static(join(__dirname, '/../dist')));
 
 app.get('/api/boards', (_req, res) => res.json(api.listBoards()));
 app.post('/api/board', (req, res) => res.json(new api.Board(req.body).query(req.query)));
+app.get('/api/score/:board/:id', (req, res) => {
+    const board = getBoard(req.params.board);
+
+    if (board) {
+        const score = board.getScore();
+    }
+});
+
 app.get('/api/queue', (_req, res) => res.json(api.pendingSubmissions()));
 
 // routing

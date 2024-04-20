@@ -78,7 +78,7 @@ button {
 .row {
     display: table-row;
 
-    &:nth-of-type(odd) .cell {
+    &:nth-of-type(odd) {
         background-color: $lightgrey;
     }
 }
@@ -91,8 +91,8 @@ button {
     border: 1px solid $black;
 }
 
-.row .cell:hover {
-    background-color: #cccccc;
+.row:hover {
+    background-color: $grey;
 }
 
 .menu {

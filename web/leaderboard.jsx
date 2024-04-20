@@ -41,7 +41,7 @@ export default function () {
                     onChange={(e) => {
                         const board = boards()[e.target.selectedIndex];
                         setBoard(board);
-                        setParams({ board: board.key });
+                        setParams({ board: board.key }, { replace: true });
                     }}
                 >
                     <For each={boards()}>
@@ -53,16 +53,12 @@ export default function () {
                     </For>
                 </select>
                 <div class="links">
-                    <a href="/submit">submit scores</a>
-                    <br/>
-                    <a href="/queue">view queue</a>
+                    <a href="/submit">submit</a>
+                    <br />
+                    <a href="/queue">queue</a>
                 </div>
             </div>
-            {board() && (
-                <>
-                    <ScoreTable listing={listing} board={board} />
-                </>
-            )}
+            {board() && <ScoreTable listing={listing} board={board} />}
         </>
     );
 }

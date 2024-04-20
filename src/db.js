@@ -1,6 +1,8 @@
 const { join } = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
+const { salt, mapHash, unhashID, hashID } = require('./salt');
+
 const dbPath = join(__dirname, `/../scores.db`);
 const hasDB = fs.existsSync(dbPath);
 const db = require('better-sqlite3')(dbPath);
@@ -13,12 +15,6 @@ process.on('SIGTERM', () => process.exit(128 + 15));
 db.pragma('journal_mode = WAL'); // only one connection at a time is made
 
 db.function('REGEX_REPLACE', (str, pattern, replacement) => str.replace(new RegExp(pattern, 'g'), replacement));
-
-const passSalt =
-    fs.readFileSync(join(__dirname, '/../salt'), 'utf8') ||
-    (() => {
-        throw new Error('provide salt');
-    })();
 
 !hasDB &&
     db.exec(`
@@ -115,6 +111,16 @@ function addBoard({ name, key, type }) {
     `);
 }
 
+const listQuery = db.prepare('SELECT name, key, type from boards WHERE public = 1');
+const listBoards = () => listQuery.all();
+
+function getBoard(key) {
+    const board = listBoards().find(board => board.key === key);
+    if (board) {
+        return new Board(board);
+    }
+}
+
 function hashBoardName(key) {
     const hash = crypto
         .createHmac('sha256', 'scorestack')
@@ -142,7 +148,7 @@ class Board {
         });
 
         this.query = (query) => {
-            const listing = db.prepare(`
+            const listing = mapHash(db.prepare(`
                 SELECT t1.*
                 FROM ${this.tableName} t1
                 JOIN (
@@ -153,7 +159,7 @@ class Board {
                     GROUP BY player_norm
                 ) t2 ON LOWER(REPLACE(t1.player, ' ', '')) = t2.player_norm AND t1.score = t2.max_score
                 ORDER BY t1.score ${this.type === 'linesLow' ? 'ASC' : 'DESC'};
-            `).all();
+            `).all());
 
                     // AND submittedTime < ${time ?? 0}
 
@@ -176,7 +182,7 @@ class Board {
             AND rejected = false
         `);
 
-        this.pending = () => pendingQuery.all();
+        this.pending = () => mapHash(pendingQuery.all());
     }
 }
 
@@ -202,10 +208,6 @@ class Score {
     }
 }
 
-
-const listQuery = db.prepare('SELECT name, key, type from boards WHERE public = 1');
-const listBoards = () => listQuery.all();
-
 // submit queue
 
 function pendingSubmissions() {
@@ -227,7 +229,7 @@ const listEditQuery = db.prepare('SELECT * from editors');
 const listEditors = () => listEditQuery.all();
 
 const hashPassword = (pass) =>
-    crypto.createHmac('sha256', passSalt).update(pass).digest('hex');
+    crypto.createHmac('sha256', salt).update(pass).digest('hex');
 
 function addEditor({ name, password }) {
     return db.prepare(
@@ -253,10 +255,11 @@ function authEditor({ name, password }) {
 // API
 module.exports = {
     db,
+    listBoards,
+    addBoard,
+    getBoard,
     Board,
     Score,
-    addBoard,
-    listBoards,
     listEditors,
     pendingSubmissions,
     addEditor,

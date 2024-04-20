@@ -26,7 +26,7 @@ export default function ScoreTable({ listing, board }) {
             </div>
             <For each={rank(listing())}>
                 {([rank, entry]) => (
-                    <a class="row" href="/score/foo">
+                    <a class="row" href={`/score/${board().key}/${entry.id}`}>
                         <div class="cell"> {rank} </div>
                         <For each={cols()}>
                             {([, property]) => (

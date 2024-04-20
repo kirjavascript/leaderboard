@@ -6,15 +6,15 @@ module.exports = async function importCSV(api) {
     // export old leaderboard as HTML and put in src/import/NES Tetris Leaderboards
     const importBoards = {
         'NTSC 0-19 Score': { name: 'NTSC', key: 'ntsc', type: 'score' },
-        'NTSC 19 Score': { name: 'NTSC19', key: 'ntsc19', type: 'score' },
-        'NTSC 29 Score': { name: 'NTSC29', key: 'ntsc29', type: 'score' },
-        'NTSC 29 Lines': { name: 'NTSC29 Lines', key: 'ntsc29lines', type: 'lines' },
-        'NTSC Level': { name: 'NTSC Level', key: 'ntsclevel', type: 'level' },
-        'NTSC Maxout Lines': { name: 'NTSC Maxout Lines', key: 'ntscmaxlines', type: 'linesLow' },
-        'NTSC 29 Maxout Lines': { name: 'NTSC 29 Maxout Lines', key: 'ntsc29maxlines', type: 'linesLow' },
-        ' NTSC Rollover Lines': { name: 'NTSC Rollover Lines', key: 'ntscrolllines', type: 'linesLow' },
+        'NTSC 19 Score': { name: 'NTSC19', key: 'ntsc-19', type: 'score' },
+        'NTSC 29 Score': { name: 'NTSC29', key: 'ntsc-29', type: 'score' },
+        'NTSC 29 Lines': { name: 'NTSC29 Lines', key: 'ntsc-29-lines', type: 'lines' },
+        'NTSC Level': { name: 'NTSC Level', key: 'ntsc-level', type: 'level' },
+        'NTSC Maxout Lines': { name: 'NTSC Maxout Lines', key: 'ntsc-maxout-lines', type: 'linesLow' },
+        'NTSC 29 Maxout Lines': { name: 'NTSC 29 Maxout Lines', key: 'ntsc-29-maxout-lines', type: 'linesLow' },
+        ' NTSC Rollover Lines': { name: 'NTSC Rollover Lines', key: 'ntsc-rollover-lines', type: 'linesLow' },
         'PAL 0-19 Score': { name: 'PAL', key: 'pal', type: 'score' },
-        'PAL 19 Score': { name: 'PAL19', key: 'pal19', type: 'score' },
+        'PAL 19 Score': { name: 'PAL19', key: 'pal-19', type: 'score' },
     };
 
     Object.values(importBoards).forEach(value => {
