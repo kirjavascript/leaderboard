@@ -1,25 +1,18 @@
 # spec
 tags!!
-choose a date to show from (time travel slider??)
-same things from existing leaderboard
+date selection
 
-modal for scores
-
-users / submit queue
+editors:
+score copy to other leaderboard
 
 cache API results?? for main lb and bust cache when writing
 
-user profiles
+playerProfile with history
+have exclude and include for tags
 
-// dedupe by score, playstyle, region
-// proof level should be
+tags: https://solid-select.com/?example=Multiple%2520Createable
 
-// import: vid pb proof level consolodate
-//
-// playerProfile with history
-// have exclude and include for tags
-// TODO: boardLayout show region available
+about page
+edit page
 
-score copy to
-
-one page
+querue linkes to edit, so does score (for admins)

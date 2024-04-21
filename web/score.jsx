@@ -67,17 +67,20 @@ function Embed({ getLink }) {
 
     createEffect(() => {
         const link = getLink();
-        if (!link) return undefined;
+
+        if (!link) return setEmbed();
 
         let url;
+
+        console.log(link);
 
         try {
             url = new URL(link);
         } catch {
-            return {
+            return setEmbed({
                 type: 'text',
                 value: link,
-            };
+            });
         }
 
         const { hostname } = url;
@@ -120,6 +123,7 @@ function Embed({ getLink }) {
 
     return (
         <Switch fallback={<p class="text-center">Loading embed...</p>}>
+            <Match when={!embed()} />
             <Match when={embed().type === 'error'}>
                 <p>
                     Embed Error: <span class="red">{embed().value}</span>

@@ -5,13 +5,14 @@ import { Router, Route } from '@solidjs/router';
 
 import Leaderboard from './leaderboard';
 import Queue from './queue';
+import Submit from './submit';
 import NotFound from './404';
 import Score from './score';
 import Player from './player';
 
 function fallback(e) {
     console.error(e);
-    return <p>error: {e.message}</p>;
+    return <p class="red">error: {e.message}</p>;
 }
 
 render(
@@ -21,7 +22,7 @@ render(
                 <Route path="/" component={Leaderboard} />
                 <Route path="/score/:board/:id" component={Score} />
                 <Route path="/player/:name" component={Player} />
-                <Route path="/submit" component={() => 'submit goes here'} />
+                <Route path="/submit" component={Submit} />
                 <Route path="/queue" component={Queue} />
                 <Route path="*404" component={NotFound} />
             </Router>
