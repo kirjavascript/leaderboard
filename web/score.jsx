@@ -72,8 +72,6 @@ function Embed({ getLink }) {
 
         let url;
 
-        console.log(link);
-
         try {
             url = new URL(link);
         } catch {
