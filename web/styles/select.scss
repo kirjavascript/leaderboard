@@ -59,8 +59,8 @@
     grid-row-start: 1;
 }
 .solid-select-multi-value {
-    --tw-bg-opacity: 1;
-    background-color: rgba(243, 244, 246, var(--tw-bg-opacity));
+    background-color: $white;
+    color: $black;
     border-radius: 0.25rem;
     display: -webkit-box;
     display: -ms-flexbox;
@@ -73,8 +73,7 @@
     font-size: 85%;
     line-height: 1;
     line-height: inherit;
-    padding-left: 4px;
-    padding-right: 4px;
+    padding: 6px;
 }
 .solid-select-multi-value-remove {
     padding-left: 0.25rem;
@@ -128,12 +127,13 @@
 }
 .solid-select-option:hover {
     --tw-bg-opacity: 1;
-    background-color: rgba(229, 231, 235, var(--tw-bg-opacity));
+    background-color: rgba(243, 244, 246, var(--tw-bg-opacity));
     color: $black;
 }
 .solid-select-option[data-focused='true'] {
     --tw-bg-opacity: 1;
-    background-color: rgba(243, 244, 246, var(--tw-bg-opacity));
+    background-color: $lightgrey;
+    color: $white;
 }
 .solid-select-option > mark {
     --tw-bg-opacity: 1;
@@ -142,7 +142,8 @@
     color: rgba(unset, var(--tw-text-opacity));
     -webkit-text-decoration-line: underline;
     text-decoration-line: underline;
-    color: $black;
+    color: $yellow;
+    cursor: pointer;
 }
 
 .solid-select-option {
