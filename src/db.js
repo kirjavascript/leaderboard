@@ -285,8 +285,6 @@ function submitCompletions() {
     };
 }
 
-console.log((submitCompletions()));
-
 // editors
 
 const listEditQuery = db.prepare('SELECT * from editors');
@@ -326,6 +324,7 @@ module.exports = {
     Score,
     listEditors,
     pendingSubmissions,
+    submitCompletions,
     addEditor,
     authEditor,
 };

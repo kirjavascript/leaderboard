@@ -33,6 +33,7 @@ app.get('/api/score/:board/:id', (req, res) => {
 });
 
 app.get('/api/queue', (_req, res) => res.json(api.pendingSubmissions()));
+app.get('/api/submit/completions', (_req, res) => res.json(api.submitCompletions()));
 
 // routing
 

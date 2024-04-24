@@ -1,6 +1,3 @@
-// hidden field + check best practises
-// autocomplete for everything
-
 import { For, createSignal, createUniqueId } from 'solid-js';
 import { Select } from './ui';
 
@@ -24,6 +21,7 @@ export default function (props) {
                 placeholder="name"
                 onChange={(e) => console.log(e)}
             />
+            <input class="raspberry" name="raspberry" />
             <pre>{JSON.stringify(props, 0, 4)}</pre>
         </>
     );
