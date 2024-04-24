@@ -2,12 +2,14 @@
 // autocomplete for everything
 
 import { For, createSignal, createUniqueId } from 'solid-js';
-import { Select as SolidSelect, createOptions } from '@thisbeyond/solid-select';
+import { Select } from './ui';
 
 export default function (props) {
     return (
         <>
             <h1>Submit Score</h1>
+
+            <h4>Name</h4>
             <Select
                 options={['foo', 'bar', 'baz']}
                 placeholder="name"
@@ -15,6 +17,7 @@ export default function (props) {
                 initialValue="foo"
                 onChange={(e) => console.log(e)}
             />
+            <h4>Foo</h4>
             <Select
                 options={['foo', 'bar', 'baz']}
                 multiple
@@ -24,17 +27,4 @@ export default function (props) {
             <pre>{JSON.stringify(props, 0, 4)}</pre>
         </>
     );
-}
-
-function Select({ options, value, ...props }) {
-    const opts = createOptions(options, {
-        disable: (v) =>
-            Array.isArray(value) ? value.includes(v) : v === value,
-        filterable: true,
-        createable: true,
-    });
-
-    console.log(opts);
-
-    return <SolidSelect {...props} {...opts} />;
 }

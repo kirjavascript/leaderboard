@@ -250,6 +250,43 @@ function pendingSubmissions() {
     return listing.sort((a, b) => +new Date(a.submittedTime) - +new Date(b.submittedTime));
 }
 
+// submit data
+
+function submitCompletions() {
+    const boards = listBoards();
+    const boardList = boards.map(board => new Board(board));
+
+    const players = new Map();
+
+    const getKey = name => name.toLowerCase().replace(/\s+/g, '');
+
+    boardList
+        .forEach(board => {
+            db.prepare(`SELECT DISTINCT player from ${board.tableName}`)
+                .all()
+                .forEach(({ player }) => {
+                    players.set(getKey(player), player);
+                });
+        });
+
+    const styles = boardList.flatMap((board) =>
+        db
+            .prepare(`SELECT DISTINCT style from ${board.tableName}`)
+            .all()
+            .map((d) => d.style),
+    );
+
+    return {
+        boards,
+        players: [...players.values()],
+        platforms: ['Emulator', 'Console'],
+        styles: styles.filter((d, i, a) => a.indexOf(d) === i),
+        proofLevels: ['Video+', 'Video', 'Image', 'Claim'],
+    };
+}
+
+console.log((submitCompletions()));
+
 // editors
 
 const listEditQuery = db.prepare('SELECT * from editors');
