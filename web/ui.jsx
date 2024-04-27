@@ -1,12 +1,12 @@
 import { Select as SolidSelect, createOptions } from '@thisbeyond/solid-select';
 
-export function Select({ options, value, ...props }) {
+export function Select({ options, value, createable, ...props }) {
     const opts = createOptions(options, {
         disable: (v) =>
             Array.isArray(value) ? value.includes(v) : v === value,
         filterable: true,
-        createable: true,
+        createable,
     });
 
-    return <SolidSelect {...props} {...opts} />;
+    return <SolidSelect placeholder="" {...props} {...opts} />;
 }

@@ -1,9 +1,8 @@
 .solid-select-container {
     position: relative;
-    --tw-bg-opacity: 1;
     background-color: $grey;
     flex: 1 1 0%;
-    max-width: 25rem;
+    // max-width: 25rem;
 }
 .solid-select-container[data-disabled='true'] {
     pointer-events: none;
@@ -142,7 +141,7 @@
     color: rgba(unset, var(--tw-text-opacity));
     -webkit-text-decoration-line: underline;
     text-decoration-line: underline;
-    color: $yellow;
+    color: $pink;
     cursor: pointer;
 }
 

@@ -278,10 +278,10 @@ function submitCompletions() {
 
     return {
         boards,
-        players: [...players.values()],
+        players: [...players.values()].sort(),
         platforms: ['Emulator', 'Console'],
         styles: styles.filter((d, i, a) => a.indexOf(d) === i),
-        proofLevels: ['Video+', 'Video', 'Image', 'Claim'],
+        proofLevels: ['Video+', 'Video', 'Partial Video', 'Image', 'Claim'],
     };
 }
 

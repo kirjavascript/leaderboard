@@ -2,6 +2,7 @@
 @import './table.scss';
 @import './select.scss';
 @import './embed.scss';
+@import './form.scss';
 
 @font-face {
     font-family: 'PressStart';
@@ -34,28 +35,6 @@ a {
     color: $purple;
     font-size: 13px;
     line-height: 1.3em;
-}
-
-select {
-    border: 2px solid $white;
-    background-color: $black;
-    color: $white;
-    font-weight: bold;
-    font-family: inherit;
-    font-size: 117%;
-    width: 150px;
-    padding: 5px;
-    margin: 0;
-    box-sizing: border-box;
-}
-
-button {
-    border: 2px solid $white;
-    padding: 0 10px;
-    background-color: $black;
-    color: $white;
-    font-weight: bold;
-    font-family: inherit;
 }
 
 .text-center {

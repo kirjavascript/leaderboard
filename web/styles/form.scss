@@ -1,0 +1,43 @@
+input[name="watermelon"] { // is a honeypot: can't be called 'hidden'
+    display: none;
+}
+
+input, textarea {
+    font-family: PressStart;
+    width: 100%;
+    font-size: 14px;
+    color: $white;
+    background-color: $grey;
+    border: none;
+    padding: 0.25rem 0.5rem;
+    line-height: 1.5;
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+button:focus {
+    outline: none;
+}
+
+select {
+    border: 2px solid $white;
+    background-color: $black;
+    color: $white;
+    font-weight: bold;
+    font-family: inherit;
+    font-size: 117%;
+    width: 150px;
+    padding: 5px;
+    margin: 0;
+    box-sizing: border-box;
+}
+
+button {
+    border: 2px solid $grey;
+    padding: 0.25rem 0.5rem;
+    background-color: $grey;
+    color: $white;
+    font-weight: bold;
+    font-family: inherit;
+}
