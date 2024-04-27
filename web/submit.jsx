@@ -1,28 +1,41 @@
 import { createSignal, Show } from 'solid-js';
-import { Select } from './ui';
+import { Select, Textarea } from './ui';
 
-export default function (props) {
-    const [name, setName] = createSignal();
+export default function ({ location: { query } }) {
     const [completions, setCompletions] = createSignal();
     const [board, setBoard] = createSignal(undefined);
-
-    // TODO set default board (from params?)
 
     fetch('/api/submit/completions')
         .then((res) => res.json())
         .then(setCompletions)
+        .then(() => {
+            const { boards } = completions();
+            setBoard(boards.find((b) => b.key === query.board) || boards[0]);
+        })
         .catch(console.error);
+
+    const [formData, setFormData] = createSignal({
+
+    });
+
+    const updateForm = data => setFormData(Object.assign({}, formData(), data));
+
+    const handleChange = (data, event) => {
+        updateForm({ [data]: event.target.value })
+    };
 
     return (
         <Show when={completions()}>
+            {JSON.stringify(formData(),0,4)}
             <h1>Submit Score</h1>
 
-            <input name="watermelon" />
+            <input name="watermelon" onChange={[handleChange, 'watermelon']}/>
 
             <h4>Board</h4>
             <select
                 onChange={(e) => {
-                    setBoard(boards()[e.target.selectedIndex])
+                    setBoard(completions().boards[e.target.selectedIndex])
+
                 }}
             >
                 <For each={completions().boards}>
@@ -34,14 +47,20 @@ export default function (props) {
                 </For>
             </select>
 
-            <h4>Name</h4>
+            <Select
+                options={completions().boards.map(board => board.name)}
+                name="player"
+                createable
+            />
+
+            <h4>Player Name</h4>
             <Select
                 options={completions().players || []}
+                name="player"
                 createable
-                onChange={(e) => console.log(e)}
             />
             <h4>Score</h4>
-            <input name="score" />
+            <input name="score" onInput={[handleChange, 'score']} />
             <h4>Platform</h4>
             <Select
                 options={completions().platforms || []}
@@ -62,8 +81,7 @@ export default function (props) {
             <h4>Proof Link</h4>
             <input name="score" />
             <h4>Notes</h4>
-            markdown??
-            <input name="score" />
+            <Textarea />
             <h4>Tags</h4>
             <Select
                 options={['foo', 'bar', 'baz']}
@@ -71,9 +89,8 @@ export default function (props) {
                 placeholder="name"
                 onChange={(e) => console.log(e)}
             />
-
+            <br />
             <button>Submit</button>
-            <pre>{JSON.stringify([props, completions()], 0, 4)}</pre>
         </Show>
     );
 }

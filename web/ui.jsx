@@ -10,3 +10,15 @@ export function Select({ options, value, createable, ...props }) {
 
     return <SolidSelect placeholder="" {...props} {...opts} />;
 }
+
+export function Textarea(props) {
+    let textarea;
+
+    function handleInput() {
+        textarea.parentNode.dataset.replicatedValue = textarea.value;
+    }
+
+    return <div class="textarea" onInput={handleInput}>
+        <textarea ref={textarea} {...props} />
+    </div>
+}

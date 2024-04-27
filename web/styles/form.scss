@@ -1,8 +1,10 @@
-input[name="watermelon"] { // is a honeypot: can't be called 'hidden'
+input[name='watermelon'] {
+    // is a honeypot: can't be called 'hidden'
     display: none;
 }
 
-input, textarea {
+input,
+textarea {
     font-family: PressStart;
     width: 100%;
     font-size: 14px;
@@ -40,4 +42,25 @@ button {
     color: $white;
     font-weight: bold;
     font-family: inherit;
+}
+
+.textarea {
+    display: grid;
+}
+.textarea::after {
+    content: attr(data-replicated-value) ' ';
+    white-space: pre-wrap;
+    visibility: hidden;
+}
+.textarea > textarea {
+    resize: none;
+    overflow: hidden;
+}
+.textarea > textarea,
+.textarea::after {
+    border: none;
+    padding: 0.25rem 0.5rem;
+    font: inherit;
+
+    grid-area: 1 / 1 / 2 / 2;
 }
