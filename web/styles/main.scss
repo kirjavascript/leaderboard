@@ -50,6 +50,12 @@ a {
     justify-content: space-between;
 }
 
+.flex-center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
 .links {
     text-align: right;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto',

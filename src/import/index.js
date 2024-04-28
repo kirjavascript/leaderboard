@@ -69,7 +69,7 @@ module.exports = async function importCSV(api) {
 
     listing.forEach((item) => {
         item.proofLevel = item['proof level'];
-        item.proof = item['proof link'];
+        item.proofLink = item['proof link'];
 
         importScore(item);
     });
@@ -85,7 +85,7 @@ module.exports = async function importCSV(api) {
                     ...item,
                     time: item.time - (300 * 12),
                     proofLevel: 'Video',
-                    proof: 'vid pb column from google sheets'
+                    proofLink: 'vid pb column from google sheets'
                 })
             }
         }
@@ -138,8 +138,8 @@ module.exports = async function importCSV(api) {
         const { tableName } = new api.Board(importBoards[boardName]);
 
         const queueInsert = api.db.prepare(`
-            INSERT INTO ${tableName} (submittedTime, player, score, style, proof, platform, notes, editorId, verified, rejected, historical, proofLevel, verifiedTime)
-            VALUES (:submittedTime, :player, :score, :style, :proof, :platform, :notes, :editorId, :verified, :rejected, :historical, :proofLevel, :verifiedTime);
+            INSERT INTO ${tableName} (submittedTime, player, score, style, proofLink, platform, notes, editorId, verified, rejected, historical, proofLevel, verifiedTime)
+            VALUES (:submittedTime, :player, :score, :style, :proofLink, :platform, :notes, :editorId, :verified, :rejected, :historical, :proofLevel, :verifiedTime);
         `);
 
         const checkQuery = api.db.prepare(`
@@ -183,13 +183,13 @@ module.exports = async function importCSV(api) {
 
         const { checkQuery, updateNotes, queueInsert } = getQueries(boardName);
 
-        const [submittedTime, player, _board, score, style, proof, platform, _type, notes, proofLevel] = cols.map(d => d.textContent);
+        const [submittedTime, player, _board, score, style, proofLink, platform, _type, notes, proofLevel] = cols.map(d => d.textContent);
 
         if (importBoards[boardName].type === 'level' && score > 255) return;
         if (importBoards[boardName].type.includes('lines') && score > 10000) return;
 
         const entry = {
-            submittedTime, score, style, proof, platform, notes, proofLevel,
+            submittedTime, score, style, proofLink, platform, notes, proofLevel,
             verified: +(color === 'green'),
             rejected: +(color === 'red'),
             historical: 1,
@@ -262,8 +262,8 @@ function importGoogleBoard(unknownId, api, board, file) {
     `);
 
     const sheetInsert = api.db.prepare(`
-        INSERT INTO ${board.tableName} (submittedTime, player, score, style, proof, platform, notes, editorId, verified, rejected, historical, proofLevel, verifiedTime)
-        VALUES (:submittedTime, :player, :score, :style, :proof, :platform, :notes, :editorId, :verified, :rejected, :historical, :proofLevel, :verifiedTime);
+        INSERT INTO ${board.tableName} (submittedTime, player, score, style, proofLink, platform, notes, editorId, verified, rejected, historical, proofLevel, verifiedTime)
+        VALUES (:submittedTime, :player, :score, :style, :proofLink, :platform, :notes, :editorId, :verified, :rejected, :historical, :proofLevel, :verifiedTime);
     `);
 
     function importGoogleEntry(entry) {
@@ -290,7 +290,7 @@ function importGoogleBoard(unknownId, api, board, file) {
             proofLevel: cols[proofLevelIndex].textContent,
             style: cols[styleIndex].textContent,
             notes: cols[notesIndex].textContent,
-            proof: cols[proofIndex]?.querySelector('a')?.href,
+            proofLink: cols[proofIndex]?.querySelector('a')?.href,
 
             submittedTime: +new Date,
             verifiedTime: +new Date,
@@ -301,7 +301,7 @@ function importGoogleBoard(unknownId, api, board, file) {
         };
 
         if (cols[notesIndex].getAttribute('colspan') != '2') {
-            entry.proof = cols[proofIndex + 1]?.querySelector('a')?.href;
+            entry.proofLink = cols[proofIndex + 1]?.querySelector('a')?.href;
             const extraNotes = cols[notesIndex + 1].textContent;
             entry.notes = [entry.notes, extraNotes].map(d=>d.trim()).filter(d=>d).join(', ');
         }
@@ -316,7 +316,7 @@ function importGoogleBoard(unknownId, api, board, file) {
                     ...entry,
                     score: vidPB,
                     proofLevel: 'Video',
-                    proof: 'vid pb column from google sheets',
+                    proofLink: 'vid pb column from google sheets',
                 });
             }
         }

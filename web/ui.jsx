@@ -1,6 +1,6 @@
 import { Select as SolidSelect, createOptions } from '@thisbeyond/solid-select';
 
-export function Select({ options, value, createable, ...props }) {
+export function Select({ onChange, name, options, value, createable, ...props }) {
     const opts = createOptions(options, {
         disable: (v) =>
             Array.isArray(value) ? value.includes(v) : v === value,
@@ -8,7 +8,9 @@ export function Select({ options, value, createable, ...props }) {
         createable,
     });
 
-    return <SolidSelect placeholder="" {...props} {...opts} />;
+    const handleChange = (value) => onChange(value, name);
+
+    return <SolidSelect name={name} onChange={handleChange} placeholder="" {...props} {...opts} />;
 }
 
 export function Textarea(props) {

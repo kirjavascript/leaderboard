@@ -90,7 +90,7 @@ function addBoard({ name, key, type }) {
             style TEXT,
 
             notes TEXT,
-            proof TEXT,
+            proofLink TEXT,
             editorId INTEGER,
             verified BOOLEAN NOT NULL,
             historical BOOLEAN DEFAULT 0,
@@ -139,8 +139,8 @@ class Board {
         this.tableName = hashBoardName(key);
 
         const addScoreQuery = db.prepare(`
-            INSERT INTO ${this.tableName} (score, player, platform, proofLevel, style, notes, proof, editorId, verified)
-            VALUES (:score, :player, :platform, :proofLevel, :style, :notes, :proof, NULL, 0);
+            INSERT INTO ${this.tableName} (score, player, platform, proofLevel, style, notes, proofLink, editorId, verified)
+            VALUES (:score, :player, :platform, :proofLevel, :style, :notes, :proofLink, NULL, 0);
         `);
 
         this.addScore = (entry) => new Score({

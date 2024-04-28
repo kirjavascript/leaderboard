@@ -1,4 +1,4 @@
-import { createSignal, createEffect, Show, Switch, Match } from 'solid-js';
+import { createSignal, Show, Switch, Match } from 'solid-js';
 
 export default function ({ params }) {
     const [entry, setEntry] = createSignal();
@@ -23,7 +23,7 @@ export default function ({ params }) {
                     <h1>{entry().board.name}</h1>
                 </div>
 
-                <Embed getLink={() => entry().proof} />
+                <Embed getLink={() => entry().proofLink} />
 
                 <p class="text-center">{entry().notes}</p>
 
@@ -64,60 +64,57 @@ export default function ({ params }) {
 
 function Embed({ getLink }) {
     const [embed, setEmbed] = createSignal({});
+    const link = getLink();
 
-    createEffect(() => {
-        const link = getLink();
+    if (!link) return setEmbed();
 
-        if (!link) return setEmbed();
+    let url;
 
-        let url;
+    try {
+        url = new URL(link);
+    } catch {
+        return setEmbed({
+            type: 'text',
+            value: link,
+        });
+    }
 
-        try {
-            url = new URL(link);
-        } catch {
-            return setEmbed({
-                type: 'text',
-                value: link,
-            });
-        }
+    const { hostname } = url;
 
-        const { hostname } = url;
-
-        if (hostname.includes('youtube.') || hostname === 'youtu.be') {
-            fetch(
-                `https://www.youtube.com/oembed?url=${encodeURI(
-                    url,
-                )}&format=json`,
+    if (hostname.includes('youtube.') || hostname === 'youtu.be') {
+        fetch(
+            `https://www.youtube.com/oembed?url=${encodeURI(
+                url,
+            )}&format=json`,
+        )
+            .then((res) =>
+                res.status !== 200
+                ? res.text().then((text) => Promise.reject(text))
+                : res.json(),
             )
-                .then((res) =>
-                    res.status !== 200
-                        ? res.text().then((text) => Promise.reject(text))
-                        : res.json(),
-                )
-                .then((res) => {
-                    setEmbed({
-                        type: 'youtube',
-                        value: res.html,
-                    });
-                })
-                .catch((err) =>
-                    setEmbed({
-                        type: 'error',
-                        value: err,
-                    }),
-                );
-        } else if (hostname.includes('twitch.')) {
-            setEmbed({
-                type: 'twitch',
-                value: link.match(/(\d+)/)?.[0],
-            });
-        } else {
-            setEmbed({
-                type: 'url',
-                value: link,
-            });
-        }
-    });
+            .then((res) => {
+                setEmbed({
+                    type: 'youtube',
+                    value: res.html,
+                });
+            })
+            .catch((err) =>
+                setEmbed({
+                    type: 'error',
+                    value: err,
+                }),
+            );
+    } else if (hostname.includes('twitch.')) {
+        setEmbed({
+            type: 'twitch',
+            value: link.match(/(\d+)/)?.[0],
+        });
+    } else {
+        setEmbed({
+            type: 'url',
+            value: link,
+        });
+    }
 
     return (
         <Switch fallback={<p class="text-center">Loading embed...</p>}>
